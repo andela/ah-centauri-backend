@@ -1,0 +1,13 @@
+[run]
+include = ./*
+omit =
+   *env*
+   *migrations*
+   *tests*
+   manage.py
+   *settings*
+
+branch = True
+
+[report]
+show_missing = True
