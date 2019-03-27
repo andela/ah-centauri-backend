@@ -4,6 +4,9 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+pep8 = "*"
+pylint = "*"
+autopep8 = "*"
 
 [packages]
 django = "*"
@@ -11,6 +14,7 @@ djangorestframework = "*"
 django-cors-middleware = "*"
 django-extensions = "*"
 pyjwt = "*"
+django-heroku = "*"
 
 [requires]
 python_version = "3.7"
