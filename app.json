@@ -1,0 +1,22 @@
+{
+  "addons": [
+    "heroku-postgresql"
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "description": "PR review app",
+  "env": {
+  },
+  "formation": {
+    "web": {
+      "quantity": 1
+    }
+  },
+  "name": "ah-centauri-backend",
+  "scripts": {
+  },
+  "stack": "heroku-18"
+}
