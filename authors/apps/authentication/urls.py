@@ -4,11 +4,7 @@ from .views import (
     LoginAPIView, RegistrationAPIView, UserRetrieveUpdateAPIView
 )
 
-<<<<<<< HEAD
 app_name = 'authentication'
-=======
-app_name='authentication'
->>>>>>> 164829189-refactor: update code
 
 urlpatterns = [
     path('user/', UserRetrieveUpdateAPIView.as_view(), name='get'),
