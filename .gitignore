@@ -10,6 +10,7 @@ __pycache__/
 .Python
 env/
 build/
+*migrations/
 develop-eggs/
 dist/
 downloads/
@@ -33,6 +34,7 @@ var/
 
 # Installer logs
 pip-log.txt
+Pipfile.lock
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
