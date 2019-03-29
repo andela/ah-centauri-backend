@@ -1,0 +1,25 @@
+language: python
+python:
+  - '3.6'
+
+install:
+  - 'pip install pipenv'
+  - 'pipenv install'
+
+services:
+  - postgresql
+
+addons:
+  postgresql: "9.6" 
+
+before_script:
+  - psql -c "CREATE DATABASE centauri;" -U postgres
+
+script:
+  - python manage.py makemigrations
+  - python manage.py migrate
+  - coverage run --source=authors.apps ./manage.py test --settings=authors.settings
+  - coverage report
+
+after_success:
+  - coveralls
