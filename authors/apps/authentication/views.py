@@ -26,7 +26,9 @@ class RegistrationAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         token = serializer.instance.token
-        return Response({'token': token, 'message': "you have successfully signed up!"}, status=status.HTTP_201_CREATED)
+        return Response({'token': token}, status=status.HTTP_201_CREATED)
+
+        # return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class LoginAPIView(APIView):
@@ -45,7 +47,7 @@ class LoginAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         user_object = serializer.validated_data['user']
         token = user_object.token
-        return Response({'token': token, 'message': "you have successfully logged in!"}, status=status.HTTP_200_OK)
+        return Response({'token': token}, status=status.HTTP_200_OK)
 
 
 class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
