@@ -85,9 +85,9 @@ class LoginSerializer(serializers.Serializer):
         # This is the data that is passed to the `create` and `update` methods
         # that we will see later on.
         return {
+            'user': user,
             'email': user.email,
             'username': user.username,
-
         }
 
 
