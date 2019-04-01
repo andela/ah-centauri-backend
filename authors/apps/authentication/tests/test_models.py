@@ -2,6 +2,7 @@ from django.test import TestCase
 
 from authors.apps.authentication.models import User
 
+
 def create_user(username="user", email="user@mail.com", password="password"):
     return User.objects.create_user(
             username=username,
@@ -9,12 +10,14 @@ def create_user(username="user", email="user@mail.com", password="password"):
             password=password
             )
 
+
 def create_superuser(username="superuser", email="superuser@mail.com", password="password"):
     return User.objects.create_superuser(
             username=username,
             email=email,
             password=password
             )
+
 
 class UserManagerTest(TestCase):
     """ Unit tests for UserManager class defined in our models. """

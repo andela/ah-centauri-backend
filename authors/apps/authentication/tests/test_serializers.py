@@ -66,8 +66,7 @@ class LoginSerializerTests(TestCase):
             )
 
     def test_login_non_existent_user_validation(self):
-        """ Test whether users can log in without an email. """
-        
+        """ Test whether users can log in without an email. """  
         serializer = LoginSerializer(data=self.login_payload)
         with self.assertRaises(ValidationError) as e:
             serializer.validate(self.login_payload)
@@ -75,22 +74,6 @@ class LoginSerializerTests(TestCase):
             e.exception.detail[0],
             'A user with this email and password was not found.'
             )
-
-    def test_login_existent_user_validation(self):
-        """ Test whether users can log in without an email. """
-        # register user
-        user = User.objects.create_user(
-            username="user",
-            email="user@mail.com",
-            password="password"
-        )
-        user.save()
-        serializer = LoginSerializer(data=self.login_payload)
-        user_data = serializer.validate(self.login_payload)
-        self.assertEqual({
-            "username": "user",
-            "email": "user@mail.com"
-        }, user_data)
 
     class UserSerializerTests(TestCase):
         """
