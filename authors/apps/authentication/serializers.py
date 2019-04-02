@@ -1,8 +1,18 @@
 from django.contrib.auth import authenticate
-
+from django.core.validators import RegexValidator, ValidationError
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
 from .models import User
+from .error_messages import errors
+import re
+
+
+def email_validate(email):
+    regex = "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+
+    if not re.match(regex, email):
+        raise ValidationError(errors['email']['invalid'])
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -13,11 +23,50 @@ class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         max_length=128,
         min_length=8,
-        write_only=True
+        write_only=True,
+        validators=[RegexValidator(
+            regex="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).+$",
+            message=errors['password']['weak_password'])],
+        error_messages={
+            "max_length": errors['password']['max_length'],
+            "min_length": errors['password']['min_length'],
+            "blank": errors['password']['blank'],
+            "required": errors['password']['required']
+        }
     )
 
-    # The client should not be able to send a token along with a registration
-    # request. Making `token` read-only handles that for us.
+    username = serializers.CharField(
+        required=True,
+        error_messages={
+            "required": errors['username']['required'],
+            "blank": errors['username']['blank'],
+            "invalid": errors['username']['invalid']
+        }
+    )
+
+    email = serializers.EmailField(
+        required=True,
+        validators=[UniqueValidator(
+            queryset=User.objects.all(), message=errors['email']['unique']),
+            email_validate],
+        error_messages={
+            "required": errors['email']['required'],
+            "blank": errors['email']['blank'],
+            "invalid": errors['email']['invalid']
+        }
+    )
+
+    def validate_username(self, username):
+
+        uname = "^(?=.{4,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$"
+
+        if User.objects.filter(username=username.lower()).exists():
+            raise ValidationError(errors['username']['unique'])
+
+        if not re.match(uname, username):
+            raise ValidationError(errors['username']['invalid'])
+
+        return username.lower()
 
     class Meta:
         model = User
@@ -34,7 +83,6 @@ class LoginSerializer(serializers.Serializer):
     email = serializers.CharField(max_length=255)
     username = serializers.CharField(max_length=255, read_only=True)
     password = serializers.CharField(max_length=128, write_only=True)
-
 
     def validate(self, data):
         # The `validate` method is where we make sure that the current
@@ -94,7 +142,7 @@ class LoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     """Handles serialization and deserialization of User objects."""
 
-    # Passwords must be at least 8 characters, but no more than 128 
+    # Passwords must be at least 8 characters, but no more than 128
     # characters. These values are the default provided by Django. We could
     # change them, but that would create extra work while introducing no real
     # benefit, so let's just stick with the defaults.
@@ -112,10 +160,9 @@ class UserSerializer(serializers.ModelSerializer):
         # specifying the field with `read_only=True` like we did for password
         # above. The reason we want to use `read_only_fields` here is because
         # we don't need to specify anything else about the field. For the
-        # password field, we needed to specify the `min_length` and 
+        # password field, we needed to specify the `min_length` and
         # `max_length` properties too, but that isn't the case for the token
         # field.
-
 
     def update(self, instance, validated_data):
         """Performs an update on a User."""
