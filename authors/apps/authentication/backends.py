@@ -1,7 +1,8 @@
 import jwt
 
 from django.conf import settings
-
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils import six
 from rest_framework import authentication, exceptions
 
 from .models import User
@@ -33,6 +34,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         auth_header_prefix = self.auth_header_prefix.lower()
 
         # Do not attempt to authenticate
+<<<<<<< HEAD
         if not auth_header:
             return None
 
@@ -40,6 +42,9 @@ class JWTAuthentication(authentication.BaseAuthentication):
             return None
 
         elif len(auth_header) > 2:
+=======
+        if not auth_header or len(auth_header) != 2:
+>>>>>>> feature(email verification)-send user verification link via email
             return None
 
         # We have to decode both the prefix and token
@@ -78,3 +83,15 @@ class JWTAuthentication(authentication.BaseAuthentication):
         return (user, token)
 
 
+class EmailActivationTokenGenerator(PasswordResetTokenGenerator):
+    """
+    The make_token method will generate a hash value with user related data
+    that will change after the password reset
+    """
+    def _make_hash_value(self, user, timestamp):
+        return (
+            six.text_type(user.pk) + six.text_type(timestamp) +
+            six.text_type(user.email_confirmed)
+        )
+
+email_activation_token = EmailActivationTokenGenerator()
