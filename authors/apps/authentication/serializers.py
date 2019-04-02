@@ -1,3 +1,5 @@
+from abc import ABC
+
 from django.contrib.auth import authenticate
 from django.core.validators import RegexValidator, ValidationError
 from rest_framework import serializers
@@ -190,3 +192,13 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class SocialOAuthSerializer(serializers.Serializer):
+    """
+    Handles serialization and deserialization
+    of the request data of social auth
+    """
+    provider = serializers.CharField(max_length=20, required=True)
+    access_token = serializers.CharField(max_length=255, required=True)
+    access_token_secret = serializers.CharField(max_length=255, allow_blank=True, default="")
