@@ -17,7 +17,7 @@ class RegistrationSerializerTests(TestCase):
         self.user = {
             "username": "user",
             "email": "user@mail.com",
-            "password": "password"
+            "password": "invAli3d#"
         }
 
     def test_register_method(self):
@@ -29,7 +29,7 @@ class RegistrationSerializerTests(TestCase):
 
     def test_validation_fails_with_non_alphanumeric_password(self):
         # setup
-        self.user.update({'password': 'inv@li3d#'})
+        self.user.update({'password': 'password'})
 
         # act
         serializer = RegistrationSerializer(data=self.user)
@@ -38,7 +38,7 @@ class RegistrationSerializerTests(TestCase):
         self.assertFalse(serializer.is_valid())
         self.assertEqual(
             serializer.errors['password'][0],
-            "Please ensure password contains only alphanumeric characters")
+            "Please ensure password contains at least 1 uppercase, 1 lowercase and 1 special character")
 
     def test_validation_fails_if_missing_password(self):
         # setup
@@ -61,8 +61,8 @@ class RegistrationSerializerTests(TestCase):
 
         # assert
         self.assertFalse(serializer.is_valid())
-        self.assertEqual(
-            serializer.errors['password'][0], "Please ensure that your password has at least 8 characters")
+        self.assertIn("Please ensure that your password has at least 8 characters",
+                      serializer.errors['password'])
 
     def test_password_max_length_validation(self):
         # setup
@@ -73,8 +73,9 @@ class RegistrationSerializerTests(TestCase):
 
         # assert
         self.assertFalse(serializer.is_valid())
-        self.assertEqual(
-            serializer.errors['password'][0], "Please ensure your password does not exceed 128 characters")
+        self.assertIn(
+            "Please ensure your password does not exceed 128 characters",
+            serializer.errors['password'])
 
     def test_validation_fails_if_blank_password(self):
         # setup

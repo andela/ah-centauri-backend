@@ -1,20 +1,10 @@
 from django.contrib.auth import authenticate
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, ValidationError
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from .models import User
-
-
-def validate_password(password):
-    """
-    Validates if a string is alphanumeric
-    :return: given string or raises a serializers.ValidationError
-    """
-
-    return RegexValidator(
-        regex=r"^[0-9a-zA-Z]$",
-        message="Please ensure password contains only alphanumeric characters")
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -27,8 +17,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
         min_length=8,
         write_only=True,
         validators=[RegexValidator(
-            regex="^[0-9a-zA-Z]+$",
-            message="Please ensure password contains only alphanumeric characters")],
+            regex="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).+$",
+            message="Please ensure password contains at least 1 uppercase, 1 lowercase and 1 special character")],
         error_messages={
             "max_length": "Please ensure your password does not exceed 128 characters",
             "min_length": "Please ensure that your password has at least 8 characters",
