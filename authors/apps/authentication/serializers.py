@@ -1,3 +1,5 @@
+from abc import ABC
+
 from django.contrib.auth import authenticate
 
 from rest_framework import serializers
@@ -34,7 +36,6 @@ class LoginSerializer(serializers.Serializer):
     email = serializers.CharField(max_length=255)
     username = serializers.CharField(max_length=255, read_only=True)
     password = serializers.CharField(max_length=128, write_only=True)
-
 
     def validate(self, data):
         # The `validate` method is where we make sure that the current
@@ -116,7 +117,6 @@ class UserSerializer(serializers.ModelSerializer):
         # `max_length` properties too, but that isn't the case for the token
         # field.
 
-
     def update(self, instance, validated_data):
         """Performs an update on a User."""
 
@@ -143,3 +143,13 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class SocialOAuthSerializer(serializers.Serializer):
+    """
+    Handles serialization and deserialization
+    of the request data of social auth
+    """
+    provider = serializers.CharField(max_length=20, required=True)
+    access_token = serializers.CharField(max_length=255, required=True)
+    access_token_secret = serializers.CharField(max_length=255, allow_blank=True, default="")
