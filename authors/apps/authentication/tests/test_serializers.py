@@ -27,12 +27,104 @@ class RegistrationSerializerTests(TestCase):
         saved_user = serializer.save()
         self.assertIsInstance(saved_user, User)
 
+    def test_validation_fails_with_non_alphanumeric_password(self):
+        # setup
+        self.user.update({'password': 'inv@li3d#'})
+
+        # act
+        serializer = RegistrationSerializer(data=self.user)
+
+        # assert
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(
+            serializer.errors['password'][0],
+            "Please ensure password contains only alphanumeric characters")
+
+    def test_validation_fails_if_missing_password(self):
+        # setup
+        self.user.pop('password')
+
+        # act
+        serializer = RegistrationSerializer(data=self.user)
+
+        # assert
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(
+            serializer.errors['password'][0], "A password is required to complete registration")
+
+    def test_password_min_length_validation(self):
+        # setup
+        self.user.update({'password': 'less'})
+
+        # act
+        serializer = RegistrationSerializer(data=self.user)
+
+        # assert
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(
+            serializer.errors['password'][0], "Please ensure that your password has at least 8 characters")
+
+    def test_password_max_length_validation(self):
+        # setup
+        self.user.update({'password': 'l'*129})
+
+        # act
+        serializer = RegistrationSerializer(data=self.user)
+
+        # assert
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(
+            serializer.errors['password'][0], "Please ensure your password does not exceed 128 characters")
+
+    def test_validation_fails_if_blank_password(self):
+        # setup
+        self.user.update({'password': ''})
+
+        # act
+        serializer = RegistrationSerializer(data=self.user)
+
+        # assert
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(
+            serializer.errors['password'][0], "A password is required to complete registration")
+
+    def test_unique_username_validation(self):
+        # setup
+        # create user
+        User.objects.create_user(**self.user)
+
+        # act
+        # attempt to create another user with same username
+        self.user.update({'email': 'newunusedemail@emails.com'})
+        serializer = RegistrationSerializer(data=self.user)
+
+        # assert
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(
+            serializer.errors['username'][0], "Provided username is already in use")
+
+    def test_unique_email_validation(self):
+        # setup
+        # create user
+        User.objects.create_user(**self.user)
+
+        # act
+        # attempt to create another user with same email
+        self.user.update({'username': 'newusername'})
+        serializer = RegistrationSerializer(data=self.user)
+
+        # assert
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(
+            serializer.errors['email'][0], "Provided email is already in use")
+
 
 class LoginSerializerTests(TestCase):
     """
     Unit tests for the LoginSerializer class
     defined in our serializers.
     """
+
     def setUp(self):
         self.login_payload = {
             "email": "user@mail.com",
@@ -50,7 +142,7 @@ class LoginSerializerTests(TestCase):
         self.assertEqual(
             e.exception.detail[0],
             'A password is required to log in.'
-            )
+        )
 
     def test_login_no_email_validation(self):
         """ Test whether users can log in without an email. """
@@ -63,18 +155,18 @@ class LoginSerializerTests(TestCase):
         self.assertEqual(
             e.exception.detail[0],
             'An email address is required to log in.'
-            )
+        )
 
     def test_login_non_existent_user_validation(self):
         """ Test whether users can log in without an email. """
-        
+
         serializer = LoginSerializer(data=self.login_payload)
         with self.assertRaises(ValidationError) as e:
             serializer.validate(self.login_payload)
         self.assertEqual(
             e.exception.detail[0],
             'A user with this email and password was not found.'
-            )
+        )
 
     def test_login_existent_user_validation(self):
         """ Test whether users can log in without an email. """
@@ -88,6 +180,7 @@ class LoginSerializerTests(TestCase):
         serializer = LoginSerializer(data=self.login_payload)
         user_data = serializer.validate(self.login_payload)
         self.assertEqual({
+            "user": user,
             "username": "user",
             "email": "user@mail.com"
         }, user_data)
