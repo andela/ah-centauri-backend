@@ -3,6 +3,13 @@ from rest_framework.generics import RetrieveUpdateAPIView, CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+# Playground
+from django.core.mail import send_mail
+from django.shortcuts import render, redirect
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.urls import reverse
+from .models import User
 
 from social_django.utils import load_backend, load_strategy
 
@@ -24,6 +31,7 @@ import jwt
 from .utils import PasswordResetTokenHandler
 from .models import User, PasswordReset
 from .response_messages import PASSWORD_RESET_MSGS
+from .backends import email_activation_token
 
 from .utils import validate_image
 
@@ -43,11 +51,49 @@ class RegistrationAPIView(APIView):
         # your own work later on. Get familiar with it.
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        user = serializer.save()
         token = serializer.instance.token
-        return Response({'token': token}, status=status.HTTP_201_CREATED)
 
-        # return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # Send a verification email to the user
+        # The combination of the token and uidb64 makes sure that the user
+        # has a unique verification link that expires in 7 days by default
+        subject = "Email Verification"
+        kwargs = {
+            'uidb64' : urlsafe_base64_encode(force_bytes(user.pk)).decode(),
+            'token' : email_activation_token.make_token(user)
+        }
+        verification_url = reverse(
+            'authentication:verify', kwargs=kwargs)
+        url = f"{request.scheme}://{request.get_host()}{verification_url}"
+        context = {'username': user.username,
+                   'url': url}
+        message = f"Dear {context['username']} \n Your account has successfully been created.\
+                    Please click the link below to activate your account. \n{context['url']}"
+        recipients = [user.email, ]
+        send_mail(subject, message,
+                  'ah.centauri@gmail.com', recipients)
+
+        return Response({
+            "token": token,
+            "message": f"A verification email has been sent to {user.email}",
+            "data": serializer.data
+        }, status=status.HTTP_201_CREATED)
+
+
+class VerifyEmailView(APIView):
+    def get(self, request, uidb64, token):
+        try:
+            uid = force_text(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except User.DoesNotExist:
+            user = None
+        
+        if user is not None and email_activation_token.check_token(user, token):
+            user.email_confirmed = True
+            user.save()
+            return Response("Email successfully verified")
+        else:
+            return Response("Verification link has expired")
 
 
 class LoginAPIView(APIView):
@@ -66,7 +112,7 @@ class LoginAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         user_object = serializer.validated_data['user']
         token = user_object.token
-        return Response({'token': token}, status=status.HTTP_200_OK)
+        return Response({'token': token, 'message': "you have successfully logged in!"}, status=status.HTTP_200_OK)
 
 
 class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):

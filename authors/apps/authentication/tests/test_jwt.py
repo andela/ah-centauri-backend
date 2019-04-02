@@ -10,7 +10,6 @@ from authors.apps.authentication.backends import JWTAuthentication
 
 class JWTAuthenticationTest(TestCase):
     """ Test the JWT Authentication implementation """
-
     def setUp(self):
         self.user_data = {
             'user': {
