@@ -3,7 +3,6 @@ from rest_framework.generics import RetrieveUpdateAPIView, CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-# Playground
 from django.core.mail import send_mail
 from django.shortcuts import render, redirect
 from django.utils.encoding import force_bytes, force_text
@@ -91,9 +90,9 @@ class VerifyEmailView(APIView):
         if user is not None and email_activation_token.check_token(user, token):
             user.email_confirmed = True
             user.save()
-            return Response("Email successfully verified")
+            return Response({"message": "Email successfully verified"}, status=status.HTTP_200_OK)
         else:
-            return Response("Verification link has expired")
+            return Response({"message": "Verification link has expired"}, status=status.HTTP_403_FORBIDDEN)
 
 
 class LoginAPIView(APIView):

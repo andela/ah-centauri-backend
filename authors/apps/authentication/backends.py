@@ -34,17 +34,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         auth_header_prefix = self.auth_header_prefix.lower()
 
         # Do not attempt to authenticate
-<<<<<<< HEAD
-        if not auth_header:
-            return None
-
-        if len(auth_header) == 1:
-            return None
-
-        elif len(auth_header) > 2:
-=======
         if not auth_header or len(auth_header) != 2:
->>>>>>> feature(email verification)-send user verification link via email
             return None
 
         # We have to decode both the prefix and token

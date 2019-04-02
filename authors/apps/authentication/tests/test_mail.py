@@ -2,6 +2,7 @@ import re
 from django.core import mail
 from django.urls import reverse
 from django.test import TestCase
+from rest_framework import status
 from rest_framework.test import APIClient
 
 class EmailTest(TestCase):
@@ -41,7 +42,8 @@ class EmailTest(TestCase):
         url = link.group()
         res = self.client.get(url)
 
-        self.assertIn("Email successfully verified", res.data)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual("Email successfully verified", res.data['message'])
 
     def test_cannot_verify_with_invalid_link(self):
         """Tests that the verification link cannot be used twice"""
@@ -52,5 +54,6 @@ class EmailTest(TestCase):
         res = self.client.get(url)
         invalid_res = self.client.get(url)
 
-        self.assertIn("Verification link has expired", invalid_res.data)       
+        self.assertEqual(invalid_res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual("Verification link has expired", invalid_res.data['message'])       
 
