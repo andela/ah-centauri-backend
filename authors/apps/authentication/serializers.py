@@ -4,8 +4,7 @@ from django.contrib.auth import authenticate
 from django.core.validators import RegexValidator, ValidationError
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-
-from .models import User
+from .models import User, PasswordReset
 from .error_messages import errors
 import re
 
@@ -15,6 +14,7 @@ def email_validate(email):
 
     if not re.match(regex, email):
         raise ValidationError(errors['email']['invalid'])
+
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -202,3 +202,37 @@ class SocialOAuthSerializer(serializers.Serializer):
     provider = serializers.CharField(max_length=20, required=True)
     access_token = serializers.CharField(max_length=255, required=True)
     access_token_secret = serializers.CharField(max_length=255, allow_blank=True, default="")
+class PasswordResetSerializer(serializers.ModelSerializer):
+    """
+    Handles serialization and deserialization of PasswordReset model
+    """
+    class Meta:
+        model = PasswordReset
+        fields = ('user_id', 'token')
+        read_only_fields = ('createdOn',)
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """ 
+    Validate PasswordReset Request from a user
+    """
+    email = serializers.EmailField()
+
+class SetNewPasswordSerializer(serializers.Serializer):
+    """ 
+    Validate the password being created by the password reset endpoint
+    """
+
+    password = serializers.CharField(
+        max_length=128,
+        min_length=8,
+        write_only=True,
+        validators=[RegexValidator(
+            regex="^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).+$",
+            message="Please ensure password contains at least 1 uppercase, 1 lowercase and 1 special character")],
+        error_messages={
+            "max_length": "Please ensure your password does not exceed 128 characters",
+            "min_length": "Please ensure that your password has at least 8 characters",
+            "blank": "A password is required to complete registration",
+            "required": "A password is required to complete registration"
+        }
+    )

@@ -95,3 +95,7 @@ db.sqlite3
 
 # Visual Studio Code 
 .vscode/
+
+#DS
+.DS_Store
+authors/.DS_Store

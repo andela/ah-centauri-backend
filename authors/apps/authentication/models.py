@@ -144,4 +144,27 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         return token.decode('utf-8')
 
+class PasswordReset(models.Model):
+    """
+    Password Reset Model create a Password Reset record
+    """
+
+    def __str__(self):
+        """
+        Return a human readable representation of the Password Reset instance.
+        """
+        return "user_id: {}, token:{}, used:{}, createdOn:{} ".format(
+            self.user_id,
+            self.token,
+            self.used,
+            self.createdOn
+            )
+
+    user_id = models.ForeignKey(User, db_column="user_id", on_delete=models.CASCADE)
+    token = models.CharField(max_length=256, unique=True)
+    used = models.BooleanField(default=False)
+    createdOn = models.DateTimeField("Created On", auto_now_add=True)
+
+
+
 
