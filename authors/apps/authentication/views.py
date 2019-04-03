@@ -14,8 +14,16 @@ from .serializers import (
     LoginSerializer,
     RegistrationSerializer,
     UserSerializer,
-    SocialOAuthSerializer
-)
+    SocialOAuthSerializer,
+    PasswordResetSerializer,
+    PasswordResetRequestSerializer,
+    SetNewPasswordSerializer,
+    )
+from django.conf import settings
+import jwt
+from .utils import PasswordResetTokenHandler
+from .models import User, PasswordReset
+from .response_messages import PASSWORD_RESET_MSGS
 
 
 class RegistrationAPIView(APIView):
@@ -154,4 +162,105 @@ class SocialOAuthAPIView(CreateAPIView):
         else:
             return Response({'errors': "Social authentication error"},
                             status=status.HTTP_400_BAD_REQUEST)
+class PasswordResetAPIView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        """ Create a password reset link and send it to the user who requested it"""
+        user = request.data.get('user', {})
+        reset_request_serializer = PasswordResetRequestSerializer(data=user)
+        reset_request_serializer.is_valid(raise_exception=True)
+        
+        try:
+            user_found = User.objects.get(email=user['email'])
+            token = PasswordResetTokenHandler().get_reset_token(user['email'])
+            serializer = PasswordResetSerializer(
+                data= {
+                    "user_id": user_found.id,
+                    "token": token,
+                }
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            PasswordResetTokenHandler.send_reset_password_link(
+                token,
+                user_found.email
+                )
+            return Response({"message": PASSWORD_RESET_MSGS['SENT_RESET_LINK']},
+                            status=status.HTTP_202_ACCEPTED)
+        
+        except Exception as e:
+            msg = "The user with email {} could not be found".format(
+                user['email']
+            )
+            return Response(
+                {"errors": msg},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+class SetPasswordAPIView(APIView):
+    """ 
+    View used to change a users password when given a password reset token
+    """
+    permission_classes = (AllowAny,)
+
+    def patch(self, request, reset_token):
+        password_reset_token = reset_token
+        password_change = request.data.get('password_data', {})
+        if password_change['new_password'] != password_change['confirm_password']:
+            return Response(
+                {"errors": PASSWORD_RESET_MSGS['UNMATCHING_PASSWORDS']},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        set_password_serializer = SetNewPasswordSerializer(
+            data={ "password": password_change['new_password']}
+            )
+        set_password_serializer.is_valid(raise_exception=True)
+        msg = "Your password has been successfully reset! Use your new password to sign in using your email and password."
+        if password_reset_token is not None:
+            try:
+                user_data = jwt.decode(password_reset_token, settings.SECRET_KEY, algorithms=['HS256'])
+            except jwt.ExpiredSignatureError:
+                return Response(
+                {"errors": PASSWORD_RESET_MSGS['EXPIRED_LINK']},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+            try:
+                link_password_reset_record = PasswordReset.objects.get(token=password_reset_token)
+                if link_password_reset_record.used is True:
+                    return Response(
+                        {"errors": PASSWORD_RESET_MSGS['USED_RESET_LINK']},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            except Exception as e:
+                return Response(
+                    {"errors": PASSWORD_RESET_MSGS['INVALID_RESET_LINK']},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            try:
+                user_found = User.objects.get(email=user_data['user_email'])
+                user_found.set_password(password_change["new_password"])
+                user_found.save()
+                password_reset_record = PasswordReset.objects.get(token=password_reset_token)
+                password_reset_record.used = True
+                password_reset_record.save()
+                return Response(
+                    {"message": PASSWORD_RESET_MSGS['RESET_SUCCESSFUL']},
+                    status=status.HTTP_200_OK
+                )
+            except Exception as e:
+                msg = "The user with email {} could not be found".format(
+                    user_data['user_email']
+                )
+                return Response(
+                    {"errors": msg},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            
+
+            
+
+
 

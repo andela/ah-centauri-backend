@@ -21,9 +21,13 @@ psycopg2 = "*"
 gunicorn = "*"
 psycopg2-binary = "*"
 six = "*"
+<<<<<<< HEAD
 social-auth-app-django = "*"
 python-social-auth = "*"
 social-auth-core = "*"
+=======
+sendgrid = "*"
+>>>>>>> 164829202-Feature-password-reset
 
 [requires]
 python_version = "3.7"

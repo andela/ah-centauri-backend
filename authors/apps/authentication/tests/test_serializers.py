@@ -1,11 +1,15 @@
 from django.test import TestCase
 from rest_framework.serializers import ValidationError
-
-from authors.apps.authentication.models import User
+from authors.apps.authentication.utils import PasswordResetTokenHandler
+import jwt
+from authors.apps.authentication.models import User, PasswordReset
 from authors.apps.authentication.serializers import LoginSerializer
 from authors.apps.authentication.serializers import RegistrationSerializer
 from authors.apps.authentication.serializers import UserSerializer
 from authors.apps.authentication.error_messages import errors
+from authors.apps.authentication.serializers import PasswordResetSerializer
+from authors.apps.authentication.serializers import PasswordResetRequestSerializer
+from authors.apps.authentication.serializers import SetNewPasswordSerializer
 
 class RegistrationSerializerTests(TestCase):
     """
@@ -252,3 +256,87 @@ class LoginSerializerTests(TestCase):
             self.assertEqual(updated_user.username, "user2")
             self.assertEqual(updated_user.email, "user2@mail.com")
             self.assertEqual(updated_user.password, current_password)
+
+class PasswordResetSerializerTest(TestCase):
+    """
+    Unit tests for the PasswordResetSerializer
+    class defined in our serializers.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+                username="test_user",
+                email="ah_user@mailinator.com",
+                password="p@ssW0rddd"
+            )
+        self.user.save()
+        password_reset_token = PasswordResetTokenHandler().get_reset_token(
+            self.user.email
+        )
+        self.password_reset = {
+            "user_id": self.user.id,
+            "token": password_reset_token
+        }
+
+        self.password_reset_invalid_user = {
+            "user_id": 10000,
+            "token": password_reset_token
+        }
+
+    def test_create_valid_password_reset_record(self):
+        """ Test whether the create password reset record method works. """
+        serializer = PasswordResetSerializer(data=self.password_reset)
+        self.assertTrue(serializer.is_valid())
+        saved_password_reset = serializer.save()
+        self.assertIsInstance(saved_password_reset, PasswordReset)
+    
+    def test_create_password_reset_without_valid_user(self):
+        """ 
+        Test whether the create password reset record 
+        without a valid user id works. 
+        """
+        serializer = PasswordResetSerializer(
+            data=self.password_reset_invalid_user
+            )
+        self.assertFalse(serializer.is_valid())
+
+class PasswordResetRequestSerializerTest(TestCase):
+    """
+    Unit test for the PasswordResetRequestSerializerTest
+    class defined in our serializers.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+                username="test_user",
+                email="ah_user@mailinator.com",
+                password="p@ssW0rddd"
+            )
+        self.user.save()
+        password_reset_token = PasswordResetTokenHandler().get_reset_token(
+            self.user.email
+        )
+        self.password_reset_request_payload = {
+            "email": self.user.email
+        }
+
+        self.password_reset_request_payload_invalid = {
+            "email": "gmail.com"
+        }
+    
+    def test_valid_password_reset_request_payload(self):
+        """ Test whether the password reset request record method works. """
+        serializer = PasswordResetRequestSerializer(
+            data=self.password_reset_request_payload
+            )
+        self.assertTrue(serializer.is_valid())
+    
+    def test_password_reset_invalid_request_payload(self):
+        """ 
+        Test whether the password reset request record 
+        without a valid user id works. 
+        """
+        serializer = PasswordResetRequestSerializer(
+            data=self.password_reset_request_payload_invalid
+            )
+        self.assertFalse(serializer.is_valid())
