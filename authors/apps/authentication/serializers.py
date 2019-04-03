@@ -15,6 +15,7 @@ def email_validate(email):
     if not re.match(regex, email):
         raise ValidationError(errors['email']['invalid'])
 
+from .models import User, PasswordReset
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
