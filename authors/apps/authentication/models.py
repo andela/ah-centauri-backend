@@ -147,6 +147,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 class PasswordReset(models.Model):
     """
     Password Reset Model create a Password Reset record
+    A password reset record should have a :
+    user_id: Int - The primary key from of the user record related to the password reset request 
+    token: String - The jwt token generated to allow a user to set their new password.
+    used: True - if the token is used or False if the token is not used.
+    
     """
 
     def __str__(self):
@@ -159,7 +164,7 @@ class PasswordReset(models.Model):
             self.used,
             self.createdOn
             )
-
+    
     user_id = models.ForeignKey(User, db_column="user_id", on_delete=models.CASCADE)
     token = models.CharField(max_length=256, unique=True)
     used = models.BooleanField(default=False)
