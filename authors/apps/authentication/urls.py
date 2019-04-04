@@ -7,6 +7,7 @@ from .views import (
     SocialOAuthAPIView,
     PasswordResetAPIView,
     SetPasswordAPIView,
+    VerifyEmailView
 )
 
 app_name = 'authentication'

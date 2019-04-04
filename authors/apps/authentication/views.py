@@ -3,8 +3,8 @@ from rest_framework.generics import RetrieveUpdateAPIView, CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.core.mail import send_mail
-from django.shortcuts import render, redirect
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.urls import reverse
@@ -66,11 +66,11 @@ class RegistrationAPIView(APIView):
         url = f"{request.scheme}://{request.get_host()}{verification_url}"
         context = {'username': user.username,
                    'url': url}
-        message = f"Dear {context['username']} \n Your account has successfully been created.\
-                    Please click the link below to activate your account. \n{context['url']}"
-        recipients = [user.email, ]
-        send_mail(subject, message,
-                  'ah.centauri@gmail.com', recipients)
+        message = render_to_string('verify.html', context)
+        recipients = [user.email, ]                 
+        msg = EmailMultiAlternatives(subject, message, 'ah.centauri@gmail.com', recipients)                                      
+        msg.attach_alternative(message, "text/html")                                                                                                                                                                               
+        msg.send() 
 
         return Response({
             "token": token,
@@ -84,15 +84,18 @@ class VerifyEmailView(APIView):
         try:
             uid = force_text(urlsafe_base64_decode(uidb64))
             user = User.objects.get(pk=uid)
-        except User.DoesNotExist:
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             user = None
-        
+            return Response({"message": "Invalid verification link"
+                             }, status=status.HTTP_404_NOT_FOUND)
         if user is not None and email_activation_token.check_token(user, token):
             user.email_confirmed = True
             user.save()
-            return Response({"message": "Email successfully verified"}, status=status.HTTP_200_OK)
+            return Response({"message": "Email successfully verified"
+                             }, status=status.HTTP_202_ACCEPTED)
         else:
-            return Response({"message": "Verification link has expired"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"message": "Verification link has expired"
+                             }, status=status.HTTP_403_FORBIDDEN)
 
 
 class LoginAPIView(APIView):
@@ -111,7 +114,10 @@ class LoginAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         user_object = serializer.validated_data['user']
         token = user_object.token
-        return Response({'token': token, 'message': "you have successfully logged in!"}, status=status.HTTP_200_OK)
+        return Response({
+            'token': token, 
+            'message': "you have successfully logged in!"
+            }, status=status.HTTP_200_OK)
 
 
 class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
