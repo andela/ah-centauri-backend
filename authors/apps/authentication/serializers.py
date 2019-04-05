@@ -17,6 +17,7 @@ def email_validate(email):
 
 from .models import User, PasswordReset
 
+from authors.apps.profiles.serializers import GetProfileSerializer
 
 class RegistrationSerializer(serializers.ModelSerializer):
     """Serializers registration requests and creates a new user."""
@@ -132,6 +133,11 @@ class LoginSerializer(serializers.Serializer):
                 'This user has been deactivated.'
             )
 
+        # Django provides a flag on our `User` model called `is_active`. The
+        # purpose of this flag to tell us whether the user has been banned
+        # or otherwise deactivated. This will almost never be the case, but
+        # it is worth checking for. Raise an exception in this case.
+
         # The `validate` method should return a dictionary of validated data.
         # This is the data that is passed to the `create` and `update` methods
         # that we will see later on.
@@ -155,9 +161,13 @@ class UserSerializer(serializers.ModelSerializer):
         write_only=True
     )
 
+    profile = GetProfileSerializer()
+
     class Meta:
         model = User
-        fields = ('email', 'username', 'password')
+        # fields = ('email', 'username', 'password')
+        fields = ('email', 'username', 'password', 'token', 'profile',)
+
 
         # The `read_only_fields` option is an alternative for explicitly
         # specifying the field with `read_only=True` like we did for password
@@ -176,6 +186,7 @@ class UserSerializer(serializers.ModelSerializer):
         # here is that we need to remove the password field from the
         # `validated_data` dictionary before iterating over it.
         password = validated_data.pop('password', None)
+        profile_data = validated_data.pop('profile', {})
 
         for (key, value) in validated_data.items():
             # For the keys remaining in `validated_data`, we will set them on
@@ -191,6 +202,11 @@ class UserSerializer(serializers.ModelSerializer):
         # the model. It's worth pointing out that `.set_password()` does not
         # save the model.
         instance.save()
+        
+        for (key, value) in profile_data.items():
+            setattr(instance.profile, key, value)
+            # Save profile
+        instance.profile.save()
 
         return instance
 

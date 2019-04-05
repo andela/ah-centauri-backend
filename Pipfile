@@ -24,6 +24,9 @@ six = "*"
 social-auth-app-django = "*"
 python-social-auth = "*"
 social-auth-core = "*"
+cloudinary = "*"
+python-decouple = "*"
+coreapi = "*"
 
 [requires]
 python_version = "3.7"
