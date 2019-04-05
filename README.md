@@ -1,14 +1,12 @@
 [![Build Status](https://travis-ci.org/andela/ah-centauri-backend.svg?branch=develop)](https://travis-ci.org/andela/ah-centauri-backend)
-[![Coverage Status](https://coveralls.io/repos/github/andela/ah-centauri-backend/badge.svg?branch=develop)](https://coveralls.io/github/andela/ah-centauri-backend?branch=develop)
+
+[![Coverage Status](https://coveralls.io/repos/github/andela/ah-centauri-backend/badge.svg)](https://coveralls.io/github/andela/ah-centauri-backend)
 
 Authors Haven - A Social platform for the creative at heart.
-=======
 
 ## Vision
 Create a community of like minded authors to foster inspiration and innovation
 by leveraging the modern web.
-
----
 
 ## API Spec
 The preferred JSON object to be returned by the API should be structured as follows:
