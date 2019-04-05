@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/andela/ah-centauri-backend.svg?branch=develop)](https://travis-ci.org/andela/ah-centauri-backend)
-[![Coverage Status](https://coveralls.io/repos/github/andela/ah-centauri-backend/badge.svg?branch=develop)](https://coveralls.io/github/andela/ah-centauri-backend?branch=develop)
+[![Coverage Status](https://coveralls.io/repos/github/andela/ah-centauri-backend/badge.svg)](https://coveralls.io/github/andela/ah-centauri-backend)
 
 Authors Haven - A Social platform for the creative at heart.
 =======
