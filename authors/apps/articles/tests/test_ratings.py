@@ -125,10 +125,7 @@ class RatingsviewsTest(TestCase):
             format='json'
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        return response
 
-    def test_post_rating_no_auth(self):
-        """ test whether an unauthenticated user is able to post a rating. """
         article = self.post_article()
         slug = article.data['slug']
         my_url = ratings_url(slug)
