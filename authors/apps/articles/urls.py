@@ -1,5 +1,6 @@
 from django.urls import path
 
+from authors.apps.articles.views import CreateArticlesAPIView, RetrieveUpdateDeleteArticleAPIView, FavoriteView, GetUserFavoritesView
 from authors.apps.articles.views import (
     CreateArticlesAPIView, RetrieveUpdateDeleteArticleAPIView, LikesView
 )
@@ -22,4 +23,7 @@ urlpatterns = [
     path('articles/<slug:slug>/dislike/',
          LikesView.as_view(model=Articles, vote_type=LikeDislike.DISLIKE),
          name='article_dislike'),
+    path('articles/favorites/me/', GetUserFavoritesView.as_view(), name="get_favorites"),
+    path('articles/<slug:slug>/favorite/', FavoriteView.as_view(), name="favorite"),
+
 ]

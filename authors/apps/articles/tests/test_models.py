@@ -8,13 +8,13 @@ class ArticleTest(TestCase):
     """ Unit tests for `User` model. """
 
     def setUp(self):
-        User.objects.create_user(
+        self.user = User.objects.create_user(
             username="user",
             email="user@mail.com",
             password="Pa@bbgbh"
         )
         self.article = Articles.objects.create(
-            author_id='1',
+            author=self.user,
             title="the 3 musketeers",
             body="is a timeless story",
             description="not written by me"

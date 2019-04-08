@@ -2,6 +2,8 @@ from rest_framework import serializers
 
 from authors.apps.articles.models import Articles, Ratings
 from authors.apps.authentication.serializers import UserSerializer
+from authors.apps.articles.models import Articles, Ratings, Favorite
+from authors.apps.authentication.serializers import UserSerializer
 
 
 class ArticleSerializer(serializers.HyperlinkedModelSerializer):
@@ -80,3 +82,13 @@ class RatingsSerializer(serializers.ModelSerializer):
                 'view_name': 'ratings:rating-detail'
             }
         }
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    """
+    Serializers for favorites
+    """
+    class Meta:
+        model = Favorite
+        fields = ('id', 'user_id', 'article_id')
+        read_only_fields = ['id']
