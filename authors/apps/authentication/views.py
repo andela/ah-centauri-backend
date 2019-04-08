@@ -58,7 +58,7 @@ class RegistrationAPIView(APIView):
         # has a unique verification link that expires in 7 days by default
         subject = "Email Verification"
         kwargs = {
-            'uidb64' : urlsafe_base64_encode(force_bytes(user.pk)).decode(),
+            'uidb64' : urlsafe_base64_encode(force_bytes(user.pk)),
             'token' : email_activation_token.make_token(user)
         }
         verification_url = reverse(
@@ -89,7 +89,7 @@ class VerifyEmailView(APIView):
             return Response({"message": "Invalid verification link"
                              }, status=status.HTTP_404_NOT_FOUND)
         if user is not None and email_activation_token.check_token(user, token):
-            user.email_confirmed = True
+            user.is_verified = True
             user.save()
             return Response({"message": "Email successfully verified"
                              }, status=status.HTTP_202_ACCEPTED)
