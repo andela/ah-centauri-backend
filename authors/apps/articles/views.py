@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from django.http import Http404
 
 from authors.apps.articles.serializers import ArticleSerializer
+from authors.apps.authentication.permissions import IsVerifiedUser
 from authors.apps.articles.permissions import IsOwnerOrReadOnly
 from authors.apps.articles.renderers import ArticleJSONRenderer
 from authors.apps.articles.models import Articles
@@ -16,7 +17,7 @@ class CreateArticlesAPIView(APIView):
     Allow any user (authenticated or not) to hit this endpoint.
     List all articles, or create a new article.
     """
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser,)
     serializer_class = ArticleSerializer
     renderer_classes = (ArticleJSONRenderer,)
 
@@ -39,7 +40,7 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
     List edit or delete an article
     only an article owner can edit or delete his/her article
     """
-    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, )
+    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, IsVerifiedUser, )
     serializer_class = ArticleSerializer
     renderer_classes = (ArticleJSONRenderer,)
 
