@@ -39,6 +39,7 @@ class viewTest(TestCase):
             password='password'
         )
         self.user_token = self.user.token
+        self.user.is_verified = True
         self.user.save()
 
         self.user2 = User.objects.create(
@@ -47,6 +48,7 @@ class viewTest(TestCase):
             password='password'
         )
         self.user2_token = self.user2.token
+        self.user2.is_verified = True
         self.user2.save()
         self.client = APIClient()
 
