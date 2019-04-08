@@ -1,6 +1,7 @@
 from django.contrib.contenttypes.models import ContentType
+from rest_framework import generics
 from rest_framework import status
-from rest_framework.generics import RetrieveUpdateAPIView, CreateAPIView
+from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -323,15 +324,17 @@ class LikesView(APIView):
         )
 
 
-class FavoriteView(CreateAPIView):
+
+class FavoriteView(generics.CreateAPIView):
     """This class creates a new favorite"""
-    permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = FavoriteSerializer
 
     def post(self, request, slug):
         """Creates a favorite"""
         data = request.data
         article = Articles.objects.filter(
+            # slug=slug, published=True, activated=True).first()
             slug=slug).first()
 
         if article is None:

@@ -26,13 +26,16 @@ class ArticlesBaseTest(APITestCase):
             'HTTP_AUTHORIZATION': f'Bearer {self.user2_token}'
         }
         
-        self.article = Articles.objects.create(
+        self.article1 = Articles.objects.create(
             title='the wheels on the bus',
             body='go round and round',
             author=self.user1
         )
-        self.article.save()
+        self.article1.save()
 
-        self.favorite_article_url = '/api/articles/{}/favorite/'.format(self.article.slug)
+        #Publish article
+        retrieved_article = Articles.objects.filter(slug=self.article1.slug).first()
+        retrieved_article.published = True
+        retrieved_article.save()
+        self.favorite_article_url = '/api/articles/{}/favorite/'.format(self.article1.slug)
         self.get_favorites_url = reverse('articles:get_favorites')
-        self.invalid_favorite_url = '/api/articles/invalid-slug/favorite/'
