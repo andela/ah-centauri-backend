@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Avg
 from django.utils.text import slugify
+from django.conf import settings
 
 from authors.apps.authentication.serializers import UserSerializer
 from ..authentication.models import User
@@ -18,14 +19,14 @@ class LikeDislikeManager(models.Manager):
 
     def likes(self):
         """
-        We take the queryset with records greater than 0 because 
+        We take the queryset with records greater than 0 because
         the likes add a negative value
         """
         return self.get_queryset().filter(vote__gt=0).count()
 
     def dislikes(self):
         """
-        We take the queryset with records less than 0 because 
+        We take the queryset with records less than 0 because
         the dislikes add a negative value
         """
         return self.get_queryset().filter(vote__lt=0).count()
@@ -120,3 +121,9 @@ class Ratings(models.Model):
     class Meta:
         ordering = ('-created_at',)
         unique_together = (('author', 'article'),)
+
+
+class Favorite(models.Model):
+    """Implement storage of favorites"""
+    user_id = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='favorites')
+    article_id = models.ForeignKey('articles.articles', on_delete=models.CASCADE, related_name='favorites')

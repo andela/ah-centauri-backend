@@ -1,25 +1,26 @@
 from django.contrib.contenttypes.models import ContentType
 from rest_framework import status
-from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.generics import RetrieveUpdateAPIView, CreateAPIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from authors.apps.articles.models import Articles, Ratings
+from authors.apps.articles.models import Articles, Favorite
+from authors.apps.articles.models import Ratings
 from authors.apps.articles.permissions import IsOwnerOrReadOnly
-from authors.apps.articles.renderers import ArticleJSONRenderer, RatingJSONRenderer
+from authors.apps.articles.renderers import ArticleJSONRenderer
+from authors.apps.articles.renderers import RatingJSONRenderer
 from authors.apps.articles.serializers import ArticleSerializer, RatingsSerializer
 from authors.apps.authentication.permissions import IsVerifiedUser
 from .models import LikeDislike
+from .serializers import FavoriteSerializer
 
 
 class ArticleNotFound(Exception):
     pass
 
-
 class RatingNotFound(Exception):
     pass
-
 
 class CreateArticlesAPIView(APIView):
     """
@@ -49,8 +50,7 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
     List edit or delete an article
     only an article owner can edit or delete his/her article
     """
-    permission_classes = (IsAuthenticatedOrReadOnly,
-                          IsOwnerOrReadOnly, IsVerifiedUser,)
+    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, IsVerifiedUser, )
     serializer_class = ArticleSerializer
     renderer_classes = (ArticleJSONRenderer,)
 
@@ -91,7 +91,7 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
         self.check_object_permissions(request, article)
         article.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
+    
 
 # add ratings views
 class CreateListRatingsAPIView(APIView):
@@ -99,7 +99,7 @@ class CreateListRatingsAPIView(APIView):
     Allow any authenticated/verified users to hit this endpoint.
     List all ratings, or create a new rating.
     """
-    permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser,)
+    permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser, )
     serializer_class = RatingsSerializer
     renderer_classes = (RatingJSONRenderer,)
 
@@ -139,7 +139,7 @@ class CreateListRatingsAPIView(APIView):
         """
         ratings = Ratings.objects.all()
         serializer = RatingsSerializer(ratings, many=True)
-        filtered_ratings = [x for x in serializer.data if x['slug'] == slug]
+        filtered_ratings = [x for x in serializer.data if x['slug']==slug]
         if filtered_ratings:
             return Response({'data': filtered_ratings, 'RatingsCount': len(serializer.data)}, status=status.HTTP_200_OK)
         return Response({'errors': 'no ratings for this article present'}, status=status.HTTP_404_NOT_FOUND)
@@ -167,7 +167,7 @@ class CreateListRatingsAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         article = self.get_object(slug)
-
+        
         article_id = article.id
         author = self.request.user
 
@@ -181,14 +181,15 @@ class CreateListRatingsAPIView(APIView):
             serializer.save(author=request.user, article=article)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-
+        
+        
 class RetrieveUpdateDeleteRatingAPIView(APIView):
     """
     Allow only authenticated users to hit these endpoints.
     List edit or delete a rating
     only a rating owner can edit or delete his/her article
     """
-    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, IsVerifiedUser)
+    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, IsVerifiedUser )
     serializer_class = RatingsSerializer
     renderer_classes = (RatingJSONRenderer,)
 
@@ -229,6 +230,7 @@ class RetrieveUpdateDeleteRatingAPIView(APIView):
         rating = self.get_object(pk)
         serializer = RatingsSerializer(rating)
         return Response(serializer.data, status=status.HTTP_200_OK)
+       
 
     def put(self, request, pk, format=None):
         """
@@ -302,8 +304,8 @@ class LikesView(APIView):
                 content_type=content_type, object_id=obj.id, user=request.user
             )
             # Checks if the object has not been liked or disliked before
-            # then likes/dislikes if it hasn't if it has 
-            # then it the like/dislike is deleted 
+            # then likes/dislikes if it hasn't if it has
+            # then it the like/dislike is deleted
             if like_dislike.vote is not self.vote_type:
                 like_dislike.vote = self.vote_type
                 like_dislike.save(update_fields=['vote'])
@@ -319,3 +321,91 @@ class LikesView(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+
+class FavoriteView(CreateAPIView):
+    """This class creates a new favorite"""
+    permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser)
+    serializer_class = FavoriteSerializer
+
+    def post(self, request, slug):
+        """Creates a favorite"""
+        data = request.data
+        article = Articles.objects.filter(
+            slug=slug).first()
+
+        if article is None:
+            not_found = {
+                "errors": "This article has not been found."
+            }
+            return Response(data=not_found, status=status.HTTP_404_NOT_FOUND)
+
+        favorite = Favorite.objects.filter(
+            user_id=request.user.pk, article_id=article.id).first()
+        if favorite is not None:
+            favorite_found = {
+                "errors": "Article already in favorites."
+            }
+            return Response(data=favorite_found,
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        data['article_id'] = article.id
+        data['user_id'] = request.user.pk
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        data = serializer.data
+        data['message'] = 'Article added to favorites.'
+        return Response(data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, slug):
+        article = Articles.objects.filter(
+            slug=slug).first()
+
+        if article is None:
+            not_found = {
+                "errors": "This article has not been found."
+            }
+            return Response(data=not_found, status=status.HTTP_404_NOT_FOUND)
+        favorite = Favorite.objects.filter(
+            article_id=article.id, user_id=request.user.pk).first()
+        if favorite:
+            message = {"message": "Article removed from favorites"}
+            favorite.delete()
+            return Response(data=message, status=status.HTTP_204_NO_CONTENT)
+        not_found = {"message": "Article not favorite"}
+        return Response(not_found, status.HTTP_404_NOT_FOUND)
+
+    def get(self, request, slug):
+        article = Articles.objects.filter(
+            slug=slug)
+        if article:
+            favorite = Favorite.objects.filter(
+                article_id=article[0].id, user_id=request.user.pk).first()
+            if favorite:
+                serializer = self.serializer_class(favorite)
+                return Response({'message': 'article favorited', 'article': serializer.data}, status=status.HTTP_200_OK)
+            not_found = {"message": "Article not favorited"}
+            return Response(not_found, status.HTTP_404_NOT_FOUND)
+        not_found = {
+                "errors": "This article has not been found."
+            }
+        return Response(data=not_found, status=status.HTTP_404_NOT_FOUND)
+
+
+class GetUserFavoritesView(APIView):
+    """Gets one user's favorite articles"""
+    permission_classes = (IsAuthenticatedOrReadOnly, )
+
+    def get(self, request):
+        favorites_queryset = Favorite.objects.filter(
+            user_id=request.user.id)
+
+        favorite_articles = []
+        for favorite in favorites_queryset:
+            article = ArticleSerializer(favorite.article_id).data
+            favorite_articles.append(article)
+        favorites = {
+            "favorites": favorite_articles
+        }
+        return Response(data=favorites, status=status.HTTP_200_OK)
