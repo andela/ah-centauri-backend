@@ -88,7 +88,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
     """
     Serializers for favorites
     """
-    class Meta:
+    class Meta():
         model = Favorite
         fields = ('id', 'user_id', 'article_id')
         read_only_fields = ['id']

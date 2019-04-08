@@ -23,6 +23,7 @@ urlpatterns = [
     path('articles/<slug:slug>/dislike/',
          LikesView.as_view(model=Articles, vote_type=LikeDislike.DISLIKE),
          name='article_dislike'),
+    path('articles/ratings/<int:pk>/', RetrieveUpdateDeleteRatingAPIView.as_view(), name='rating-detail'),
     path('articles/favorites/me/', GetUserFavoritesView.as_view(), name="get_favorites"),
     path('articles/<slug:slug>/favorite/', FavoriteView.as_view(), name="favorite"),
 
