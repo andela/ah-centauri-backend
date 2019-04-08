@@ -9,7 +9,7 @@ from authors.apps.authentication.models import User
 ARTICLES_URL = reverse('articles:articles')
 
 def article_url(slug):
-    """Return recipe detail URL"""
+    """Return article detail URL"""
     return reverse('articles:article', args=[slug])
 
 class viewTest(TestCase):
