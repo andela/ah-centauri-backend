@@ -14,7 +14,7 @@ class EmailTest(TestCase):
             'user': {
                 'email': 'user1@mail.com',
                 'username': 'user1',
-                'password': 'password'
+                'password': 'Password#1'
                 }
             }
  
@@ -49,7 +49,7 @@ class EmailTest(TestCase):
 
     def test_cannot_verify_twice_with_same_link(self):
         """Tests that the verification link cannot be used twice"""
-        res = self.sign_up_user()
+        self.sign_up_user()
         link = re.search(
             r'http:\/\/[a-zA-Z0-9]+\/[a-z]+\/[a-z]+-[a-z]+\/[-0-9a-z]+\/[A-z]+\/',
             mail.outbox[0].body)
