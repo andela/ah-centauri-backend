@@ -12,12 +12,21 @@ def article_url(slug):
     """Return article detail URL"""
     return reverse('articles:article', args=[slug])
 
+def like_url(slug):
+    """Return like url"""
+    return reverse('articles:article_like', args=[slug])
+
+def dislike_url(slug):
+    """Return like url"""
+    return reverse('articles:article_dislike', args=[slug])
+
 class viewTest(TestCase):
     """ Unit tests for the create/list view class defined in our views. """
     # any authenticated user should be able to create an article 
     # any visitor to the site should be able to view all articles
 
     def setUp(self):
+
         self.article = {
             "article" : {
                 "title": "MS. Found in a bottle",
@@ -219,3 +228,38 @@ class viewTest(TestCase):
             format='json'
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class LikeViewTest(viewTest):
+
+    def test_like_an_article(self):
+        headers = {'HTTP_AUTHORIZATION': f'Bearer {self.user_token}'}
+        self.client.post(
+            ARTICLES_URL,
+            self.article,
+            **headers,
+            format='json'
+        )
+        res = self.client.post(
+            like_url('ms-found-in-a-bottle'),
+            **headers,
+            format='json'
+        )
+        self.assertEqual(res.data['like_count'], 1)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_dislike_an_article(self):
+        headers = {'HTTP_AUTHORIZATION': f'Bearer {self.user_token}'}
+        self.client.post(
+            ARTICLES_URL,
+            self.article,
+            **headers,
+            format='json'
+        )
+        res = self.client.post(
+            dislike_url('ms-found-in-a-bottle'),
+            **headers,
+            format='json'
+        )
+        self.assertEqual(res.data['dislike_count'], 1)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
