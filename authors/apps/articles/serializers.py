@@ -9,6 +9,9 @@ class ArticleSerializer(serializers.HyperlinkedModelSerializer):
     description = serializers.CharField(required=True, max_length=140)
     author = serializers.ReadOnlyField(source='get_author')
     average_rating = serializers.ReadOnlyField(source='get_average_rating')
+    author = UserSerializer(required=False)
+    likes = serializers.ReadOnlyField(source='likes.likes')
+    dislikes = serializers.ReadOnlyField(source='likes.dislikes')
     
     def create(self, validated_data):
         """
@@ -31,8 +34,8 @@ class ArticleSerializer(serializers.HyperlinkedModelSerializer):
     
     class Meta:
         model = Articles
-        fields = ('id', 'created_at', 'updated_at', 'title',
-        'body', 'description', 'slug', 'average_rating', 'author')
+        fields = ('id', 'likes', 'dislikes', 'created_at', 'updated_at', 'author',
+                    'title', 'body', 'description','average_rating', 'slug')
         extra_kwargs = {
             'url': {
                 'view_name': 'articles:article-detail'

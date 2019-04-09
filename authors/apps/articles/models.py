@@ -5,8 +5,45 @@ from django.db.models import Avg
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 from authors.apps.authentication.serializers import UserSerializer
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericRelation
+from django.db.models import Sum
+from ..authentication.models import User
+
+class LikeDislikeManager(models.Manager):
+    use_for_related_fields = True
+ 
+    def likes(self):
+        # We take the queryset with records greater than 0
+        return self.get_queryset().filter(vote__gt=0).count()
+ 
+    def dislikes(self):
+        # We take the queryset with records less than 0
+        return self.get_queryset().filter(vote__lt=0).count()
+ 
+
+class LikeDislike(models.Model):
+    LIKE = 1
+    DISLIKE = -1
+ 
+    VOTES = (
+        (DISLIKE, 'Dislike'),
+        (LIKE, 'Like')
+    )
+ 
+    vote = models.SmallIntegerField(verbose_name="vote", choices=VOTES)
+    user = models.ForeignKey(User, verbose_name="user", on_delete=models.CASCADE)
+ 
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey()
+ 
+    objects = LikeDislikeManager()
+
 
 class Articles(models.Model):
+    likes = GenericRelation(LikeDislike, related_query_name='articles')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     author = models.ForeignKey('authentication.User', related_name='articles', on_delete=models.CASCADE, null=False, default='')
@@ -74,3 +111,5 @@ class Ratings(models.Model):
 
 
     
+
+ 

@@ -5,18 +5,22 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.http import Http404
 
-
 from authors.apps.authentication.permissions import IsVerifiedUser
 from authors.apps.articles.serializers import ArticleSerializer, RatingsSerializer
 from authors.apps.articles.permissions import IsOwnerOrReadOnly
 from authors.apps.articles.renderers import ArticleJSONRenderer, RatingJSONRenderer
 from authors.apps.articles.models import Articles, Ratings
+from django.contrib.contenttypes.models import ContentType
+from .models import LikeDislike
+
 
 class ArticleNotFound(Exception):
     pass
 
+
 class RatingNotFound(Exception):
     pass
+
 
 class CreateArticlesAPIView(APIView):
     """
@@ -271,3 +275,31 @@ class RetrieveUpdateDeleteRatingAPIView(APIView):
         rating.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
+class LikesView(APIView):
+    model = None    # Data Model - Articles or Comments
+    vote_type = None # Vote type Like/Dislike
+    permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser, )
+ 
+    def post(self, request, slug):
+        obj = self.model.objects.get(slug=slug)
+        # GenericForeignKey does not support get_or_create
+        ct = ContentType.objects.get_for_model(obj)
+        try:
+            likedislike = LikeDislike.objects.get(
+                content_type=ct, object_id=obj.id, user=request.user
+            )
+            if likedislike.vote is not self.vote_type:
+                likedislike.vote = self.vote_type
+                likedislike.save(update_fields=['vote'])
+            else:
+                likedislike.delete()
+        except LikeDislike.DoesNotExist:
+            obj.likes.create(user=request.user, vote=self.vote_type)
+ 
+        return Response(
+            {
+                "like_count": obj.likes.likes(),
+                "dislike_count": obj.likes.dislikes()
+            },
+            status=status.HTTP_200_OK
+        )
