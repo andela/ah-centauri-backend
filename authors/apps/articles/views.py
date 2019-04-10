@@ -50,7 +50,8 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
     List edit or delete an article
     only an article owner can edit or delete his/her article
     """
-    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, IsVerifiedUser, )
+    permission_classes = (IsAuthenticatedOrReadOnly,
+                          IsOwnerOrReadOnly, IsVerifiedUser, )
     serializer_class = ArticleSerializer
     renderer_classes = (ArticleJSONRenderer,)
 
@@ -91,7 +92,7 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
         self.check_object_permissions(request, article)
         article.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
 
 # add ratings views
 class CreateListRatingsAPIView(APIView):
@@ -277,9 +278,9 @@ class RetrieveUpdateDeleteRatingAPIView(APIView):
     
 class LikesView(APIView):
     model = None    # Data Model - Articles or Comments
-    vote_type = None # Vote type Like/Dislike
+    vote_type = None  # Vote type Like/Dislike
     permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser, )
- 
+
     def post(self, request, slug):
         obj = self.model.objects.get(slug=slug)
         # GenericForeignKey does not support get_or_create
@@ -295,7 +296,7 @@ class LikesView(APIView):
                 likedislike.delete()
         except LikeDislike.DoesNotExist:
             obj.likes.create(user=request.user, vote=self.vote_type)
- 
+
         return Response(
             {
                 "like_count": obj.likes.likes(),

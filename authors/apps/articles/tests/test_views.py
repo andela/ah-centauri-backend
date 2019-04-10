@@ -8,27 +8,31 @@ from authors.apps.authentication.models import User
 
 ARTICLES_URL = reverse('articles:articles')
 
+
 def article_url(slug):
     """Return article detail URL"""
     return reverse('articles:article', args=[slug])
+
 
 def like_url(slug):
     """Return like url"""
     return reverse('articles:article_like', args=[slug])
 
+
 def dislike_url(slug):
     """Return like url"""
     return reverse('articles:article_dislike', args=[slug])
 
+
 class viewTest(TestCase):
     """ Unit tests for the create/list view class defined in our views. """
-    # any authenticated user should be able to create an article 
+    # any authenticated user should be able to create an article
     # any visitor to the site should be able to view all articles
 
     def setUp(self):
 
         self.article = {
-            "article" : {
+            "article": {
                 "title": "MS. Found in a bottle",
                 "body": "is a very good story",
                 "description": "was not written by me"
@@ -36,12 +40,12 @@ class viewTest(TestCase):
         }
 
         self.invalid_article = {
-            "article" : {
+            "article": {
                 "title": "Berenice",
                 "description": "was not written by me"
             }
         }
-        
+
         self.user = User.objects.create(
             username='user',
             email='user@mail.com',
@@ -231,6 +235,7 @@ class viewTest(TestCase):
 
 
 class LikeViewTest(viewTest):
+    """Tests for like and dislike"""
 
     def test_like_an_article(self):
         headers = {'HTTP_AUTHORIZATION': f'Bearer {self.user_token}'}
