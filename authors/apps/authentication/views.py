@@ -329,7 +329,7 @@ class SetPasswordAPIView(APIView):
     """
     permission_classes = (AllowAny,)
 
-    # 
+    
     def patch(self, request, reset_token):
         """
         Create a password reset link and send it to the user who requested it.

@@ -22,7 +22,18 @@ class Profile(TimeStampModel):
     phone = models.IntegerField('phone', blank=True, null=True, default=0)
     website = models.URLField('website', blank=True, null=True, default='')
     image = CloudinaryField(
-        'image', default="image/upload/t_media_lib_thumb/v1554230107/samples/people/boy-snow-hoodie.jpg")
+        'image',
+        default="image/upload/t_media_lib_thumb/v1554230107/samples/people/boy-snow-hoodie.jpg")
+    # Add a follows field to allow users to follow each other
+    # symmetrical is False as if a user follows you, 
+    # then that does not automatically mean that you follow that user
+    # related name for the user QuerySet filters 'followed_by'
+    follows = models.ManyToManyField('Profile',
+                                     through='CustomFollows',
+                                     through_fields=(
+                                         'from_profile', 'to_profile'),
+                                     related_name="followed_by",
+                                     symmetrical=False)
 
     def __str__(self):
         return self.user.username
@@ -48,5 +59,12 @@ def create_profile(sender, **kwargs):
         user_profile.save()
 
 
- # connect the signal to the handler function
+# connect the signal to the handler function
 post_save.connect(create_profile, sender=settings.AUTH_USER_MODEL)
+
+
+class CustomFollows(models.Model):
+    from_profile = models.ForeignKey(Profile, on_delete=models.CASCADE,
+                                     related_name="from_profile")
+    to_profile = models.ForeignKey(Profile, on_delete=models.CASCADE,
+                                   related_name="to_profile")
