@@ -19,7 +19,6 @@ class ArticleJSONRenderer(JSONRenderer):
                 # rendering errors.
                 return super(ArticleJSONRenderer, self).render(data)
 
-
         # Finally, we can render our data under the "article" namespace.
         if data is not None:
             return json.dumps({
@@ -28,6 +27,7 @@ class ArticleJSONRenderer(JSONRenderer):
         return json.dumps({
             'message': 'success'
         })
+
 
 class RatingJSONRenderer(JSONRenderer):
     charset = 'utf-8'
@@ -44,7 +44,6 @@ class RatingJSONRenderer(JSONRenderer):
                 # As mentioned about, we will let the default JSONRenderer handle
                 # rendering errors.
                 return super(RatingJSONRenderer, self).render(data)
-
 
         # Finally, we can render our data under the "article" namespace.
         if data is not None:

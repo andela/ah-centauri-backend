@@ -1,7 +1,7 @@
 from django.test import TestCase
 
-from authors.apps.profiles.models import Profile, CustomFollows
 from authors.apps.authentication.models import User
+from authors.apps.profiles.models import CustomFollows
 
 
 class TestProfile(TestCase):
@@ -27,6 +27,7 @@ class TestCustomFollow(TestCase):
     """
     Test to verify the functionality of the CustomFollow table.
     """
+
     def setUp(self):
         """ Setup users for testing the CustomFollow Functionality"""
         self.user1 = {
@@ -55,7 +56,7 @@ class TestCustomFollow(TestCase):
             to_profile_id=self.user2_profile.id
         )
         self.assertEqual(follow_record.to_profile_id, self.user2_profile.id)
-    
+
     def test_user_can_unfollow_another_user(self):
         """
         Test if users can unfollow each other
@@ -68,10 +69,10 @@ class TestCustomFollow(TestCase):
         self.assertEqual(follow_record.to_profile_id, self.user2_profile.id)
         self.user1_profile.follows.remove(self.user2_profile)
         self.assertRaises(
-                CustomFollows.DoesNotExist,
-                CustomFollows.objects.get,
-                to_profile_id=self.user2_profile.id
-                )
+            CustomFollows.DoesNotExist,
+            CustomFollows.objects.get,
+            to_profile_id=self.user2_profile.id
+        )
 
     def test_user_can_follow_another_user_using_model(self):
         """
@@ -86,7 +87,7 @@ class TestCustomFollow(TestCase):
         self.assertEqual(follow_record.to_profile_id, self.user2_profile.id)
         self.user1_profile.follows.remove(self.user2_profile)
         self.assertRaises(
-                CustomFollows.DoesNotExist,
-                CustomFollows.objects.get,
-                to_profile_id=self.user2_profile.id
-                )
+            CustomFollows.DoesNotExist,
+            CustomFollows.objects.get,
+            to_profile_id=self.user2_profile.id
+        )

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from authors.apps.articles.models import Articles, Ratings
 from authors.apps.authentication.serializers import UserSerializer
 
@@ -13,7 +14,7 @@ class ArticleSerializer(serializers.HyperlinkedModelSerializer):
     author = UserSerializer(required=False)
     likes = serializers.ReadOnlyField(source='likes.likes')
     dislikes = serializers.ReadOnlyField(source='likes.dislikes')
-    
+
     def create(self, validated_data):
         """
         Create and return a new `Article` instance, given the validated data.
@@ -32,16 +33,16 @@ class ArticleSerializer(serializers.HyperlinkedModelSerializer):
         instance.save()
         return instance
 
-    
     class Meta:
         model = Articles
         fields = ('id', 'likes', 'dislikes', 'created_at', 'updated_at', 'author',
-                    'title', 'body', 'description','average_rating', 'slug')
+                  'title', 'body', 'description', 'average_rating', 'slug')
         extra_kwargs = {
             'url': {
                 'view_name': 'articles:article-detail'
             }
         }
+
 
 # add ratings serializer
 class RatingsSerializer(serializers.ModelSerializer):
@@ -70,11 +71,10 @@ class RatingsSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('please keep range of rating from 1-5')
         return data
 
-
     class Meta:
         model = Ratings
         fields = ('id', 'created_at', 'updated_at', 'author', 'article', 'slug',
-                    'value', 'review')
+                  'value', 'review')
         extra_kwargs = {
             'url': {
                 'view_name': 'ratings:rating-detail'

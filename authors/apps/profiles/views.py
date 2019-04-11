@@ -1,17 +1,19 @@
 from rest_framework import status
 from rest_framework.generics import RetrieveAPIView, ListAPIView
-from rest_framework.views import APIView
 from rest_framework.permissions import (
     IsAuthenticated, IsAuthenticatedOrReadOnly)
-from authors.apps.authentication.permissions import IsVerifiedUser
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from authors.apps.authentication.models import User
-from .models import Profile, CustomFollows
-from .renderers import ProfileJSONRenderer
-from .serializers import GetProfileSerializer
+from authors.apps.authentication.permissions import IsVerifiedUser
 from .exceptions import ProfileDoesNotExist
+from .models import CustomFollows
+from .models import Profile
+from .renderers import ProfileJSONRenderer
 from .response_messages import FOLLOW_USER_MSGS, get_followers_found_message
-from .utils import get_follow_username_list, get_user_following_data
+from .serializers import GetProfileSerializer
+from .utils import get_user_following_data
 
 
 class ProfileRetrieveAPIView(RetrieveAPIView):

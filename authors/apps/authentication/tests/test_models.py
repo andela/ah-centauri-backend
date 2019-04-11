@@ -5,18 +5,18 @@ from authors.apps.authentication.models import User
 
 def create_user(username="user", email="user@mail.com", password="password"):
     return User.objects.create_user(
-            username=username,
-            email=email,
-            password=password
-            )
+        username=username,
+        email=email,
+        password=password
+    )
 
 
 def create_superuser(username="superuser", email="superuser@mail.com", password="password"):
     return User.objects.create_superuser(
-            username=username,
-            email=email,
-            password=password
-            )
+        username=username,
+        email=email,
+        password=password
+    )
 
 
 class UserManagerTest(TestCase):
@@ -60,7 +60,7 @@ class UserTest(TestCase):
             username="user",
             email="user@mail.com",
             password="password"
-            )
+        )
 
     def test_user_string_representation(self):
         """

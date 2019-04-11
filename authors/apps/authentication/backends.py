@@ -1,5 +1,4 @@
 import jwt
-
 from django.conf import settings
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils import six
@@ -78,10 +77,12 @@ class EmailActivationTokenGenerator(PasswordResetTokenGenerator):
     The make_token method will generate a hash value with user related data
     that will change after the password reset
     """
+
     def _make_hash_value(self, user, timestamp):
         return (
-            six.text_type(user.pk) + six.text_type(timestamp) +
-            six.text_type(user.is_verified)
+                six.text_type(user.pk) + six.text_type(timestamp) +
+                six.text_type(user.is_verified)
         )
+
 
 email_activation_token = EmailActivationTokenGenerator()

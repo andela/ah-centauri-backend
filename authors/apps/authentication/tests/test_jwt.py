@@ -1,15 +1,15 @@
 from django.test import TestCase
 from django.urls import reverse
-
 from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory
 
-from authors.apps.authentication.models import User
 from authors.apps.authentication.backends import JWTAuthentication
+from authors.apps.authentication.models import User
 
 
 class JWTAuthenticationTest(TestCase):
     """ Test the JWT Authentication implementation """
+
     def setUp(self):
         self.user_data = {
             'user': {
