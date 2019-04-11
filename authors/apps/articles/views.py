@@ -277,23 +277,29 @@ class RetrieveUpdateDeleteRatingAPIView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
     
 class LikesView(APIView):
+    """
+    View for liking and disliking Articles and later on Comments
+    """
     model = None    # Data Model - Articles or Comments
     vote_type = None  # Vote type Like/Dislike
     permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser, )
 
-    def post(self, request, slug):
-        obj = self.model.objects.get(slug=slug)
+    def post(self, request, *args, **kwargs):
+        obj = self.model.objects.get(slug=self.kwargs['slug'])
         # GenericForeignKey does not support get_or_create
         ct = ContentType.objects.get_for_model(obj)
         try:
-            likedislike = LikeDislike.objects.get(
+            like_dislike = LikeDislike.objects.get(
                 content_type=ct, object_id=obj.id, user=request.user
             )
-            if likedislike.vote is not self.vote_type:
-                likedislike.vote = self.vote_type
-                likedislike.save(update_fields=['vote'])
+            # Checks if the object has not been liked or disliked before
+            # then likes/dislikes if it hasn't if it has 
+            # then it the like/dislike is deleted 
+            if like_dislike.vote is not self.vote_type:
+                like_dislike.vote = self.vote_type
+                like_dislike.save(update_fields=['vote'])
             else:
-                likedislike.delete()
+                like_dislike.delete()
         except LikeDislike.DoesNotExist:
             obj.likes.create(user=request.user, vote=self.vote_type)
 

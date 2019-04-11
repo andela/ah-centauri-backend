@@ -11,34 +11,49 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.db.models import Sum
 from ..authentication.models import User
 
+
 class LikeDislikeManager(models.Manager):
+    """
+    Manager that holds the methods for
+    the LikeDislike class
+    """
     use_for_related_fields = True
- 
+
     def likes(self):
-        # We take the queryset with records greater than 0
+        """
+        We take the queryset with records greater than 0 because 
+        the likes add a negative value
+        """
         return self.get_queryset().filter(vote__gt=0).count()
- 
+
     def dislikes(self):
-        # We take the queryset with records less than 0
+        """
+        We take the queryset with records less than 0 because 
+        the dislikes add a negative value
+        """
         return self.get_queryset().filter(vote__lt=0).count()
- 
+
 
 class LikeDislike(models.Model):
+    """
+    Handles like and dislike of articles
+    """
     LIKE = 1
     DISLIKE = -1
- 
+
     VOTES = (
         (DISLIKE, 'Dislike'),
         (LIKE, 'Like')
     )
- 
+
     vote = models.SmallIntegerField(verbose_name="vote", choices=VOTES)
-    user = models.ForeignKey(User, verbose_name="user", on_delete=models.CASCADE)
- 
+    user = models.ForeignKey(User, verbose_name="user",
+                             on_delete=models.CASCADE)
+
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey()
- 
+
     objects = LikeDislikeManager()
 
 
@@ -46,7 +61,8 @@ class Articles(models.Model):
     likes = GenericRelation(LikeDislike, related_query_name='articles')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    author = models.ForeignKey('authentication.User', related_name='articles', on_delete=models.CASCADE, null=False, default='')
+    author = models.ForeignKey('authentication.User', related_name='articles',
+                               on_delete=models.CASCADE, null=False, default='')
     title = models.CharField(max_length=100, default='')
     slug = models.SlugField(max_length=140, unique=True, blank=True)
     body = models.TextField()
@@ -63,7 +79,7 @@ class Articles(models.Model):
             unique_slug = '{}-{}'.format(slug, num)
             num += 1
         return unique_slug
- 
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = self.get_unique_slug()
@@ -86,7 +102,6 @@ class Articles(models.Model):
           "image":user.data['profile']['image']
         }
         return author
-
 
     class Meta:
         ordering = ('-created_at',)
