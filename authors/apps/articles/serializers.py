@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from authors.apps.articles.models import Articles, Ratings
+from authors.apps.authentication.serializers import UserSerializer
 
 
 class ArticleSerializer(serializers.HyperlinkedModelSerializer):
