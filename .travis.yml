@@ -16,11 +16,7 @@ before_script:
   - psql -c "CREATE DATABASE centauri;" -U postgres
 
 script:
-  - python manage.py makemigrations authentication
-  - python manage.py makemigrations profiles 
-  - python manage.py makemigrations articles
-  - python manage.py makemigrations comments
-  - python manage.py migrate
+  - chmod u+x release.sh && ./release.sh
   - coverage run --source=authors.apps ./manage.py test --settings=authors.settings
   - coverage report
 
