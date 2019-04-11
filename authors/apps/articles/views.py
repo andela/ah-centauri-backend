@@ -285,12 +285,24 @@ class LikesView(APIView):
     permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser, )
 
     def post(self, request, *args, **kwargs):
+        """
+        Method to like or dislike an article
+
+        Params
+        -------
+        request: Object with request data and functions.
+        kwargs: reference to the article to liked/disliked
+
+        Returns
+        --------
+        total number of likes and dislikes for that article
+        """
         obj = self.model.objects.get(slug=self.kwargs['slug'])
         # GenericForeignKey does not support get_or_create
-        ct = ContentType.objects.get_for_model(obj)
+        content_type = ContentType.objects.get_for_model(obj)
         try:
             like_dislike = LikeDislike.objects.get(
-                content_type=ct, object_id=obj.id, user=request.user
+                content_type=content_type, object_id=obj.id, user=request.user
             )
             # Checks if the object has not been liked or disliked before
             # then likes/dislikes if it hasn't if it has 
