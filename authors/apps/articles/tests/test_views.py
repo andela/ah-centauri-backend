@@ -24,7 +24,7 @@ def dislike_url(slug):
     return reverse('articles:article_dislike', args=[slug])
 
 
-class viewTest(TestCase):
+class ViewTest(TestCase):
     """ Unit tests for the create/list view class defined in our views. """
     # any authenticated user should be able to create an article
     # any visitor to the site should be able to view all articles
@@ -234,10 +234,11 @@ class viewTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
-class LikeViewTest(viewTest):
+class LikeViewTest(ViewTest):
     """Tests for like and dislike"""
 
     def test_like_an_article(self):
+        """Test that an article can be liked"""
         headers = {'HTTP_AUTHORIZATION': f'Bearer {self.user_token}'}
         self.client.post(
             ARTICLES_URL,
@@ -254,6 +255,7 @@ class LikeViewTest(viewTest):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
     def test_dislike_an_article(self):
+        """Test that an article can be disliked"""
         headers = {'HTTP_AUTHORIZATION': f'Bearer {self.user_token}'}
         self.client.post(
             ARTICLES_URL,
@@ -267,4 +269,50 @@ class LikeViewTest(viewTest):
             format='json'
         )
         self.assertEqual(res.data['dislike_count'], 1)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_second_user_likes(self):
+        """Tests that a second user can like"""
+        headers = {'HTTP_AUTHORIZATION': f'Bearer {self.user_token}'}
+        headers1 = {'HTTP_AUTHORIZATION': f'Bearer {self.user2_token}'}
+        self.client.post(
+            ARTICLES_URL,
+            self.article,
+            **headers,
+            format='json'
+        )
+        self.client.post(
+            like_url('ms-found-in-a-bottle'),
+            **headers,
+            format='json'
+        )
+        res = self.client.post(
+            like_url('ms-found-in-a-bottle'),
+            **headers1,
+            format='json'
+        )
+        self.assertEqual(res.data['like_count'], 2)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_second_user_dislikes(self):
+        """Tests that another user can dislike and the dislikes accumulates"""
+        headers = {'HTTP_AUTHORIZATION': f'Bearer {self.user_token}'}
+        headers1 = {'HTTP_AUTHORIZATION': f'Bearer {self.user2_token}'}
+        self.client.post(
+            ARTICLES_URL,
+            self.article,
+            **headers,
+            format='json'
+        )
+        self.client.post(
+            dislike_url('ms-found-in-a-bottle'),
+            **headers,
+            format='json'
+        )
+        res = self.client.post(
+            dislike_url('ms-found-in-a-bottle'),
+            **headers1,
+            format='json'
+        )
+        self.assertEqual(res.data['dislike_count'], 2)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
