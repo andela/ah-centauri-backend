@@ -6,8 +6,8 @@ from rest_framework.test import APIClient
 
 from authors.apps.articles.models import Articles
 from authors.apps.comments.models import Comment
-from authors.apps.comments.serializers import CommentSerializer
 from authors.apps.comments.response_messages import COMMENTS_MSG
+from authors.apps.comments.serializers import CommentSerializer
 
 
 def sample_article(user_id):

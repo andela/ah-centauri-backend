@@ -1,7 +1,8 @@
 import os
+
 from django.urls import reverse
-from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
+from rest_framework.test import APITestCase, APIClient
 
 AUTH_URL = reverse('authentication:social')
 
@@ -10,6 +11,7 @@ class SocialAuthTest(APITestCase):
     """
     Base tet class for social authentication
     """
+
     def setUp(self):
         self.client = APIClient()
 
@@ -55,5 +57,3 @@ class SocialAuthTest(APITestCase):
         self.assertDictEqual(res.data, {
             "errors": "Your credentials aren't allowed"
         })
-
-

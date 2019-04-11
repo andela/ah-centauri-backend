@@ -8,8 +8,8 @@ from authors.apps.articles.permissions import IsOwnerOrReadOnly
 from authors.apps.authentication.permissions import IsVerifiedUser
 from authors.apps.comments.models import Comment
 from authors.apps.comments.renderers import CommentJSONRenderer
-from authors.apps.comments.serializers import CommentSerializer
 from authors.apps.comments.response_messages import COMMENTS_MSG
+from authors.apps.comments.serializers import CommentSerializer
 
 
 class RetrieveCommentAPIView(APIView):

@@ -1,16 +1,15 @@
+from django.contrib.contenttypes.models import ContentType
 from rest_framework import status
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.http import Http404
 
-from authors.apps.authentication.permissions import IsVerifiedUser
-from authors.apps.articles.serializers import ArticleSerializer, RatingsSerializer
+from authors.apps.articles.models import Articles, Ratings
 from authors.apps.articles.permissions import IsOwnerOrReadOnly
 from authors.apps.articles.renderers import ArticleJSONRenderer, RatingJSONRenderer
-from authors.apps.articles.models import Articles, Ratings
-from django.contrib.contenttypes.models import ContentType
+from authors.apps.articles.serializers import ArticleSerializer, RatingsSerializer
+from authors.apps.authentication.permissions import IsVerifiedUser
 from .models import LikeDislike
 
 
@@ -51,7 +50,7 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
     only an article owner can edit or delete his/her article
     """
     permission_classes = (IsAuthenticatedOrReadOnly,
-                          IsOwnerOrReadOnly, IsVerifiedUser, )
+                          IsOwnerOrReadOnly, IsVerifiedUser,)
     serializer_class = ArticleSerializer
     renderer_classes = (ArticleJSONRenderer,)
 
@@ -100,7 +99,7 @@ class CreateListRatingsAPIView(APIView):
     Allow any authenticated/verified users to hit this endpoint.
     List all ratings, or create a new rating.
     """
-    permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser, )
+    permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser,)
     serializer_class = RatingsSerializer
     renderer_classes = (RatingJSONRenderer,)
 
@@ -140,7 +139,7 @@ class CreateListRatingsAPIView(APIView):
         """
         ratings = Ratings.objects.all()
         serializer = RatingsSerializer(ratings, many=True)
-        filtered_ratings = [x for x in serializer.data if x['slug']==slug]
+        filtered_ratings = [x for x in serializer.data if x['slug'] == slug]
         if filtered_ratings:
             return Response({'data': filtered_ratings, 'RatingsCount': len(serializer.data)}, status=status.HTTP_200_OK)
         return Response({'errors': 'no ratings for this article present'}, status=status.HTTP_404_NOT_FOUND)
@@ -168,7 +167,7 @@ class CreateListRatingsAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         article = self.get_object(slug)
-        
+
         article_id = article.id
         author = self.request.user
 
@@ -182,15 +181,14 @@ class CreateListRatingsAPIView(APIView):
             serializer.save(author=request.user, article=article)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        
-        
+
 class RetrieveUpdateDeleteRatingAPIView(APIView):
     """
     Allow only authenticated users to hit these endpoints.
     List edit or delete a rating
     only a rating owner can edit or delete his/her article
     """
-    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, IsVerifiedUser )
+    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, IsVerifiedUser)
     serializer_class = RatingsSerializer
     renderer_classes = (RatingJSONRenderer,)
 
@@ -231,7 +229,6 @@ class RetrieveUpdateDeleteRatingAPIView(APIView):
         rating = self.get_object(pk)
         serializer = RatingsSerializer(rating)
         return Response(serializer.data, status=status.HTTP_200_OK)
-       
 
     def put(self, request, pk, format=None):
         """
@@ -255,7 +252,6 @@ class RetrieveUpdateDeleteRatingAPIView(APIView):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
     def delete(self, request, pk, format=None):
         """
         Method to delete a specific rating
@@ -275,14 +271,15 @@ class RetrieveUpdateDeleteRatingAPIView(APIView):
         self.check_object_permissions(request, rating)
         rating.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
+
 class LikesView(APIView):
     """
     View for liking and disliking Articles and later on Comments
     """
-    model = None    # Data Model - Articles or Comments
+    model = None  # Data Model - Articles or Comments
     vote_type = None  # Vote type Like/Dislike
-    permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser, )
+    permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser,)
 
     def post(self, request, *args, **kwargs):
         """

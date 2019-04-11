@@ -1,12 +1,11 @@
-from abc import ABC
+import re
 
 from django.contrib.auth import authenticate
 from django.core.validators import RegexValidator, ValidationError
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from .models import User, PasswordReset
+
 from .error_messages import errors
-import re
 
 
 def email_validate(email):
@@ -15,9 +14,11 @@ def email_validate(email):
     if not re.match(regex, email):
         raise ValidationError(errors['email']['invalid'])
 
+
 from .models import User, PasswordReset
 
 from authors.apps.profiles.serializers import GetProfileSerializer
+
 
 class RegistrationSerializer(serializers.ModelSerializer):
     """Serializers registration requests and creates a new user."""
@@ -167,7 +168,6 @@ class UserSerializer(serializers.ModelSerializer):
         # fields = ('email', 'username', 'password')
         fields = ('email', 'username', 'password', 'token', 'profile',)
 
-
         # The `read_only_fields` option is an alternative for explicitly
         # specifying the field with `read_only=True` like we did for password
         # above. The reason we want to use `read_only_fields` here is because
@@ -201,7 +201,7 @@ class UserSerializer(serializers.ModelSerializer):
         # the model. It's worth pointing out that `.set_password()` does not
         # save the model.
         instance.save()
-        
+
         for (key, value) in profile_data.items():
             setattr(instance.profile, key, value)
             # Save profile
@@ -218,20 +218,25 @@ class SocialOAuthSerializer(serializers.Serializer):
     provider = serializers.CharField(max_length=20, required=True)
     access_token = serializers.CharField(max_length=255, required=True)
     access_token_secret = serializers.CharField(max_length=255, allow_blank=True, default="")
+
+
 class PasswordResetSerializer(serializers.ModelSerializer):
     """
     Handles serialization and deserialization of PasswordReset model
     """
+
     class Meta:
         model = PasswordReset
         fields = ('user_id', 'token')
         read_only_fields = ('createdOn',)
+
 
 class PasswordResetRequestSerializer(serializers.Serializer):
     """ 
     Validate PasswordReset Request from a user
     """
     email = serializers.EmailField()
+
 
 class SetNewPasswordSerializer(serializers.Serializer):
     """ 

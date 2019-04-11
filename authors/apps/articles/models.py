@@ -1,14 +1,11 @@
-import itertools
-from django.db import models
-from django.utils.text import slugify
-from django.db.models import Avg
-from django.core.validators import MaxValueValidator, MinValueValidator
-
-from authors.apps.authentication.serializers import UserSerializer
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.fields import GenericRelation
-from django.db.models import Sum
+from django.contrib.contenttypes.models import ContentType
+from django.db import models
+from django.db.models import Avg
+from django.utils.text import slugify
+
+from authors.apps.authentication.serializers import UserSerializer
 from ..authentication.models import User
 
 
@@ -87,7 +84,7 @@ class Articles(models.Model):
 
     def get_absolute_url(self):
         return 'authors:articles', (self.slug,)
-    
+
     def get_average_rating(self):
         if Ratings.objects.all().count() > 0:
             rating = Ratings.objects.all().aggregate(Avg('value'))
@@ -97,9 +94,9 @@ class Articles(models.Model):
     def get_author(self):
         user = UserSerializer(self.author)
         author = {
-          "username":user.data['profile']['username'],
-          "bio":user.data['profile']['bio'],
-          "image":user.data['profile']['image']
+            "username": user.data['profile']['username'],
+            "bio": user.data['profile']['bio'],
+            "image": user.data['profile']['image']
         }
         return author
 
@@ -123,8 +120,3 @@ class Ratings(models.Model):
     class Meta:
         ordering = ('-created_at',)
         unique_together = (('author', 'article'),)
-
-
-    
-
- 

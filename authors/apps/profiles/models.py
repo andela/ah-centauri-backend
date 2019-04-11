@@ -1,9 +1,10 @@
+from cloudinary import CloudinaryImage
+from cloudinary.models import CloudinaryField
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save
+
 from authors.apps.core.models import TimeStampModel
-from cloudinary.models import CloudinaryField
-from cloudinary import CloudinaryImage
 
 
 class Profile(TimeStampModel):
@@ -25,7 +26,7 @@ class Profile(TimeStampModel):
         'image',
         default="image/upload/t_media_lib_thumb/v1554230107/samples/people/boy-snow-hoodie.jpg")
     # Add a follows field to allow users to follow each other
-    # symmetrical is False as if a user follows you, 
+    # symmetrical is False as if a user follows you,
     # then that does not automatically mean that you follow that user
     # related name for the user QuerySet filters 'followed_by'
     follows = models.ManyToManyField('Profile',

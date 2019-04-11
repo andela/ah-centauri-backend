@@ -1,15 +1,15 @@
 from django.test import TestCase
 from rest_framework.serializers import ValidationError
-from authors.apps.authentication.utils import PasswordResetTokenHandler
-import jwt
+
+from authors.apps.authentication.error_messages import errors
 from authors.apps.authentication.models import User, PasswordReset
 from authors.apps.authentication.serializers import LoginSerializer
+from authors.apps.authentication.serializers import PasswordResetRequestSerializer
+from authors.apps.authentication.serializers import PasswordResetSerializer
 from authors.apps.authentication.serializers import RegistrationSerializer
 from authors.apps.authentication.serializers import UserSerializer
-from authors.apps.authentication.error_messages import errors
-from authors.apps.authentication.serializers import PasswordResetSerializer
-from authors.apps.authentication.serializers import PasswordResetRequestSerializer
-from authors.apps.authentication.serializers import SetNewPasswordSerializer
+from authors.apps.authentication.utils import PasswordResetTokenHandler
+
 
 class RegistrationSerializerTests(TestCase):
     """
@@ -70,7 +70,7 @@ class RegistrationSerializerTests(TestCase):
 
     def test_password_max_length_validation(self):
         # setup
-        self.user.update({'password': 'l'*129})
+        self.user.update({'password': 'l' * 129})
 
         # act
         serializer = RegistrationSerializer(data=self.user)
@@ -257,6 +257,7 @@ class LoginSerializerTests(TestCase):
             self.assertEqual(updated_user.email, "user2@mail.com")
             self.assertEqual(updated_user.password, current_password)
 
+
 class PasswordResetSerializerTest(TestCase):
     """
     Unit tests for the PasswordResetSerializer
@@ -265,10 +266,10 @@ class PasswordResetSerializerTest(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-                username="test_user",
-                email="ah_user@mailinator.com",
-                password="p@ssW0rddd"
-            )
+            username="test_user",
+            email="ah_user@mailinator.com",
+            password="p@ssW0rddd"
+        )
         self.user.save()
         password_reset_token = PasswordResetTokenHandler().get_reset_token(
             self.user.email
@@ -289,7 +290,7 @@ class PasswordResetSerializerTest(TestCase):
         self.assertTrue(serializer.is_valid())
         saved_password_reset = serializer.save()
         self.assertIsInstance(saved_password_reset, PasswordReset)
-    
+
     def test_create_password_reset_without_valid_user(self):
         """ 
         Test whether the create password reset record 
@@ -297,8 +298,9 @@ class PasswordResetSerializerTest(TestCase):
         """
         serializer = PasswordResetSerializer(
             data=self.password_reset_invalid_user
-            )
+        )
         self.assertFalse(serializer.is_valid())
+
 
 class PasswordResetRequestSerializerTest(TestCase):
     """
@@ -308,10 +310,10 @@ class PasswordResetRequestSerializerTest(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-                username="test_user",
-                email="ah_user@mailinator.com",
-                password="p@ssW0rddd"
-            )
+            username="test_user",
+            email="ah_user@mailinator.com",
+            password="p@ssW0rddd"
+        )
         self.user.save()
         password_reset_token = PasswordResetTokenHandler().get_reset_token(
             self.user.email
@@ -323,14 +325,14 @@ class PasswordResetRequestSerializerTest(TestCase):
         self.password_reset_request_payload_invalid = {
             "email": "gmail.com"
         }
-    
+
     def test_valid_password_reset_request_payload(self):
         """ Test whether the password reset request record method works. """
         serializer = PasswordResetRequestSerializer(
             data=self.password_reset_request_payload
-            )
+        )
         self.assertTrue(serializer.is_valid())
-    
+
     def test_password_reset_invalid_request_payload(self):
         """ 
         Test whether the password reset request record 
@@ -338,5 +340,5 @@ class PasswordResetRequestSerializerTest(TestCase):
         """
         serializer = PasswordResetRequestSerializer(
             data=self.password_reset_request_payload_invalid
-            )
+        )
         self.assertFalse(serializer.is_valid())

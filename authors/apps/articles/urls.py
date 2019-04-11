@@ -1,10 +1,9 @@
 from django.urls import path
 
-from authors.apps.articles.views import CreateArticlesAPIView, RetrieveUpdateDeleteArticleAPIView
-from authors.apps.articles.views import CreateListRatingsAPIView, RetrieveUpdateDeleteRatingAPIView
 from authors.apps.articles.views import (
     CreateArticlesAPIView, RetrieveUpdateDeleteArticleAPIView, LikesView
 )
+from authors.apps.articles.views import CreateListRatingsAPIView, RetrieveUpdateDeleteRatingAPIView
 from .models import Articles, LikeDislike
 
 app_name = 'articles'

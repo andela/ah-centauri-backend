@@ -1,21 +1,23 @@
+import jwt
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework import status
 from rest_framework.generics import RetrieveUpdateAPIView, CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
-from django.utils.encoding import force_bytes, force_text
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.urls import reverse
-from .models import User
-
-from social_django.utils import load_backend, load_strategy
-
 from social_core.backends.oauth import BaseOAuth1, BaseOAuth2
 from social_core.exceptions import MissingBackend
+from social_django.utils import load_backend, load_strategy
 
+from .backends import email_activation_token
+from .models import User, PasswordReset
 from .renderers import UserJSONRenderer
+from .response_messages import PASSWORD_RESET_MSGS
 from .serializers import (
     LoginSerializer,
     RegistrationSerializer,
@@ -24,16 +26,9 @@ from .serializers import (
     PasswordResetSerializer,
     PasswordResetRequestSerializer,
     SetNewPasswordSerializer,
-    )
-from django.conf import settings
-import jwt
+)
 from .utils import PasswordResetTokenHandler
-from .models import User, PasswordReset
-from .response_messages import PASSWORD_RESET_MSGS
-from .backends import email_activation_token
-
 from .utils import validate_image
-
 
 
 class RegistrationAPIView(APIView):
@@ -58,8 +53,8 @@ class RegistrationAPIView(APIView):
         # has a unique verification link that expires in 7 days by default
         subject = "Email Verification"
         kwargs = {
-            'uidb64' : urlsafe_base64_encode(force_bytes(user.pk)),
-            'token' : email_activation_token.make_token(user)
+            'uidb64': urlsafe_base64_encode(force_bytes(user.pk)),
+            'token': email_activation_token.make_token(user)
         }
         verification_url = reverse(
             'authentication:verify', kwargs=kwargs)
@@ -67,10 +62,10 @@ class RegistrationAPIView(APIView):
         context = {'username': user.username,
                    'url': url}
         message = render_to_string('verify.html', context)
-        recipients = [user.email, ]                 
-        msg = EmailMultiAlternatives(subject, message, 'ah.centauri@gmail.com', recipients)                                      
-        msg.attach_alternative(message, "text/html")                                                                                                                                                                               
-        msg.send() 
+        recipients = [user.email, ]
+        msg = EmailMultiAlternatives(subject, message, 'ah.centauri@gmail.com', recipients)
+        msg.attach_alternative(message, "text/html")
+        msg.send()
 
         return Response({
             "token": token,
@@ -115,9 +110,9 @@ class LoginAPIView(APIView):
         user_object = serializer.validated_data['user']
         token = user_object.token
         return Response({
-            'token': token, 
+            'token': token,
             'message': "you have successfully logged in!"
-            }, status=status.HTTP_200_OK)
+        }, status=status.HTTP_200_OK)
 
 
 class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
@@ -134,7 +129,6 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
-
         # serializer_data = request.data.get('user', {})
 
         image = self.request.data.get('image')
@@ -163,7 +157,7 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
                 'website': serializer_data.get(
                     'website', request.user.profile.website),
 
-             }
+            }
         }
 
         # Here is that serialize, validate, save pattern we talked about
@@ -248,11 +242,13 @@ class SocialOAuthAPIView(CreateAPIView):
         else:
             return Response({'errors': "Social authentication error"},
                             status=status.HTTP_400_BAD_REQUEST)
+
+
 class PasswordResetAPIView(APIView):
     """
     A view class used to send password reset email links
     """
-    
+
     permission_classes = (AllowAny,)
 
     def post(self, request):
@@ -275,43 +271,43 @@ class PasswordResetAPIView(APIView):
                 "errors": "error details body"
             } 
         """
-        
+
         # Get the user email from the request details in the "user dictionary"
         user = request.data.get('user', {})
-        
+
         # Verify the email provided in the request is valid or raise an exception otherwise.
         reset_request_serializer = PasswordResetRequestSerializer(data=user)
         reset_request_serializer.is_valid(raise_exception=True)
-        
+
         # Try and send the email to a user on the platform with the given email.
         try:
             # Get user based on the email if the user exists
             user_found = User.objects.get(email=user['email'])
-            
+
             # Create a jwt token based on the user making the request we will use it in the reset link
             token = PasswordResetTokenHandler().get_reset_token(user['email'])
             # Validate the new PasswordReset record and raise an exception if it is not
             serializer = PasswordResetSerializer(
-                data= {
+                data={
                     "user_id": user_found.id,
                     "token": token,
                 }
             )
             serializer.is_valid(raise_exception=True)
-        
+
             # Save the PasswordToken record if everything is in order
             serializer.save()
-            
+
             # Send a password reset link to the user's email
             PasswordResetTokenHandler.send_reset_password_link(
                 token,
                 user_found,
                 request
-                )
+            )
             # Respond with a success message and status code if the request has passed
             return Response({"message": PASSWORD_RESET_MSGS['SENT_RESET_LINK']},
                             status=status.HTTP_202_ACCEPTED)
-        
+
         except Exception as e:
             # Send a response with an error if the user was not found.
             msg = "The user with email {} could not be found".format(
@@ -322,6 +318,7 @@ class PasswordResetAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+
 class SetPasswordAPIView(APIView):
     """ 
     View used to change a users password when given a password reset token
@@ -329,7 +326,6 @@ class SetPasswordAPIView(APIView):
     """
     permission_classes = (AllowAny,)
 
-    
     def patch(self, request, reset_token):
         """
         Create a password reset link and send it to the user who requested it.
@@ -351,40 +347,40 @@ class SetPasswordAPIView(APIView):
                 "errors": "error details body"
             } 
         """
-        
+
         # Set the token to the parameter from the request
         password_reset_token = reset_token
-    
+
         # Get the new password and confirmed password from within the "password_data" dictionary
         password_change = request.data.get('password_data', {})
 
-        #Check if the new_password and confirmed password both match otherwise return an error.
+        # Check if the new_password and confirmed password both match otherwise return an error.
         if password_change['new_password'] != password_change['confirm_password']:
             return Response(
                 {"errors": PASSWORD_RESET_MSGS['UNMATCHING_PASSWORDS']},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Check if the password provided passes the validation requirements 
         # 1 uppercase, 1 lowercase and a special character.
-        
+
         set_password_serializer = SetNewPasswordSerializer(
-            data={ "password": password_change['new_password']}
-            )
+            data={"password": password_change['new_password']}
+        )
         # Raise an exception if the validation does not pass
         set_password_serializer.is_valid(raise_exception=True)
 
         # Check if there is a value in the current password reset token
         if password_reset_token is not None:
-        
+
             # Try to decode the token provided
             try:
                 user_data = jwt.decode(password_reset_token, settings.SECRET_KEY, algorithms=['HS256'])
             except Exception as e:
                 return Response(
-                {"errors": PASSWORD_RESET_MSGS['EXPIRED_LINK']},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+                    {"errors": PASSWORD_RESET_MSGS['EXPIRED_LINK']},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             # Try to fetch the password reset record related to the token,
             # from the PasswordReset table in the database (if the record exists)
@@ -401,16 +397,16 @@ class SetPasswordAPIView(APIView):
                     {"errors": PASSWORD_RESET_MSGS['INVALID_RESET_LINK']},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-                
+
             # Try to fetch the user data from the decode token payload email.
-            #This is so we can reset their password and give them a new one.
+            # This is so we can reset their password and give them a new one.
             try:
                 # find the user for the request and save their new password
                 user_found = User.objects.get(email=user_data['user_email'])
                 user_found.set_password(password_change["new_password"])
                 user_found.save()
                 # Update and save the Password Reset record 
-                #so the token associated with it can't be used again.
+                # so the token associated with it can't be used again.
                 password_reset_record = PasswordReset.objects.get(token=password_reset_token)
                 password_reset_record.used = True
                 password_reset_record.save()
@@ -427,10 +423,3 @@ class SetPasswordAPIView(APIView):
                     {"errors": msg},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-                
-            
-
-            
-
-
-

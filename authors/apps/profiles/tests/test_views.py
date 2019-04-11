@@ -1,14 +1,15 @@
+import json
+
 from django.test import TestCase, Client
 from django.urls import reverse
-import json
 from rest_framework import status
+
 from authors.apps.authentication.models import User
-from authors.apps.profiles.models import Profile, CustomFollows
-from authors.apps.profiles.utils import get_follow_username_list
-from authors.apps.profiles.renderers import ProfileJSONRenderer
+from authors.apps.profiles.models import CustomFollows
 from authors.apps.profiles.response_messages import (
     FOLLOW_USER_MSGS,
     get_followers_found_message)
+from authors.apps.profiles.utils import get_follow_username_list
 
 
 class TestProfileViews(TestCase):
