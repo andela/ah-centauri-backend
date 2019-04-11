@@ -54,6 +54,10 @@ class LikeDislike(models.Model):
 
     objects = LikeDislikeManager()
 
+    @property
+    def article(self):
+        return self.articles.first()
+
 
 class Articles(models.Model):
     likes = GenericRelation(LikeDislike, related_query_name='articles')

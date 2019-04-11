@@ -10,6 +10,14 @@ from rest_framework.generics import RetrieveUpdateAPIView, CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.urls import reverse
+
+from social_django.utils import load_backend, load_strategy
+
 from social_core.backends.oauth import BaseOAuth1, BaseOAuth2
 from social_core.exceptions import MissingBackend
 from social_django.utils import load_backend, load_strategy
@@ -26,7 +34,9 @@ from .serializers import (
     PasswordResetSerializer,
     PasswordResetRequestSerializer,
     SetNewPasswordSerializer,
-)
+    NotificationSerializer, UserNotificationSerializer)
+from django.conf import settings
+import jwt
 from .utils import PasswordResetTokenHandler
 from .utils import validate_image
 
@@ -423,3 +433,51 @@ class SetPasswordAPIView(APIView):
                     {"errors": msg},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+
+
+class NotificationsView(APIView):
+    """
+    View used to show or retrieve the authenticated user's notifications
+    and to mark them as read
+    """
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        notifications = request.user.notifications
+
+        notifications = NotificationSerializer(instance=notifications, many=True)
+
+        return Response(notifications.data)
+
+    def patch(self, request):
+        request.user.notifications.update(is_read=True)
+
+        notifications = request.user.notifications
+
+        notifications = NotificationSerializer(instance=notifications, many=True)
+
+        return Response(notifications.data)
+
+
+class NotificationSettingsView(APIView):
+    """
+    View used to opt in/out of app notifications.
+    These notifications currently include in app & email notifications
+    """
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        notification_settings = request.user.notification_settings
+
+        notification_settings = UserNotificationSerializer(instance=notification_settings).data
+
+        return Response(notification_settings)
+
+    def patch(self, request):
+        notification_settings = request.user.notification_settings
+        serializer = UserNotificationSerializer(notification_settings, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        notification_settings = serializer.save(user=request.user)
+        notification_settings = UserNotificationSerializer(instance=notification_settings)
+
+        return Response(notification_settings.data)
