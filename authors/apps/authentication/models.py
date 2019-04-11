@@ -143,6 +143,14 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         return token.decode('utf-8')
 
+    @property
+    def email_notifications(self):
+        return self.notification_settings.email_notifications
+
+    @property
+    def in_app_notifications(self):
+        return self.notification_settings.in_app_notifications
+
 
 class PasswordReset(models.Model):
     """
@@ -169,3 +177,15 @@ class PasswordReset(models.Model):
     token = models.CharField(max_length=256, unique=True)
     used = models.BooleanField(default=False)
     createdOn = models.DateTimeField("Created On", auto_now_add=True)
+
+
+class UserNotification(models.Model):
+    """
+    User Notification model stores user's preferences for notifications.
+    By default all users are "opted in" to notifications
+    """
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True,
+                                related_name='notification_settings')
+    email_notifications = models.BooleanField(default=True)
+    in_app_notifications = models.BooleanField(default=True)

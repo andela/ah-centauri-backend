@@ -1,0 +1,5 @@
+      New Article: {{ article.title }} Published,
+
+      {{ article.description }}
+
+      Authors Haven Team.

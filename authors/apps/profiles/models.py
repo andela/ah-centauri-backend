@@ -48,6 +48,11 @@ class Profile(TimeStampModel):
             width=100, height=150, crop='fill')
         return image_url
 
+    @property
+    def followers(self):
+        profiles = self.to_profile.all()
+        return [profile.from_profile.user for profile in profiles]
+
 
 """
 Signal receiver for 'post_save' signal sent by User model upon saving

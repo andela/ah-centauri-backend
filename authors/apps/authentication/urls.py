@@ -7,8 +7,8 @@ from .views import (
     SocialOAuthAPIView,
     PasswordResetAPIView,
     SetPasswordAPIView,
-    VerifyEmailView
-)
+    VerifyEmailView,
+    NotificationsView, NotificationSettingsView)
 
 app_name = 'authentication'
 
@@ -23,4 +23,6 @@ urlpatterns = [
          SetPasswordAPIView.as_view(), name='password_change'),
     path('verify-email/<token>/<uidb64>/',
          VerifyEmailView.as_view(), name='verify'),
+    path('me/notifications', NotificationsView.as_view(), name='notifications'),
+    path('notification/settings', NotificationSettingsView.as_view(), name='notification_settings')
 ]

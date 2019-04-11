@@ -11,9 +11,8 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
-
-import django_heroku
 from decouple import config
+import sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -43,8 +42,9 @@ INSTALLED_APPS = [
     'django_extensions',
     'rest_framework',
     'social_django',
+    'notifications',
 
-    'authors.apps.authentication',
+    'authors.apps.authentication.apps.AuthenticationConfig',
     'authors.apps.core',
     'authors.apps.profiles',
     'authors.apps.articles.apps.ArticlesConfig',
@@ -63,7 +63,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    'social_django.middleware.SocialAuthExceptionMiddleware'
+    'social_django.middleware.SocialAuthExceptionMiddleware',
 ]
 
 ROOT_URLCONF = 'authors.urls'
@@ -168,6 +168,18 @@ SOCIAL_AUTH_TWITTER_KEY = os.environ.get('SOCIAL_AUTH_TWITTER_KEY')
 SOCIAL_AUTH_TWITTER_SECRET = os.environ.get('SOCIAL_AUTH_TWITTER_SECRET')
 SOCIAL_AUTH_TWITTER_SCOPE = ['email']
 
+# notifications
+
+NOTIFICATIONS_PAGINATE_BY = 15
+NOTIFICATIONS_USE_WEBSOCKET = False
+NOTIFICATIONS_RABBIT_MQ_URL = 'amqp://guest:guest@localhost:5672'
+NOTIFICATIONS_CHANNELS = {
+    'console': 'notifications.channels.ConsoleChannel',
+    'email': 'authors.apps.core.channels.EmailNotificationChannel'
+}
+
+CELERY_TASK_ALWAYS_EAGER = True
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
@@ -219,4 +231,4 @@ CLOUDINARY = {
     'secure': True
 }
 
-django_heroku.settings(locals())
+TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'

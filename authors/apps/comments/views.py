@@ -3,13 +3,14 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from authors.apps.articles.models import Articles
+from authors.apps.articles.models import Articles, Favorite
 from authors.apps.articles.permissions import IsOwnerOrReadOnly
 from authors.apps.authentication.permissions import IsVerifiedUser
 from authors.apps.comments.models import Comment
 from authors.apps.comments.renderers import CommentJSONRenderer
 from authors.apps.comments.response_messages import COMMENTS_MSG
 from authors.apps.comments.serializers import CommentSerializer
+from authors.apps.core.utils import send_notifications
 
 
 class RetrieveCommentAPIView(APIView):
@@ -51,7 +52,18 @@ class RetrieveCommentAPIView(APIView):
             comment = request.data.get('comment', {})
             serializer = self.serializer_class(data=comment)
             serializer.is_valid(raise_exception=True)
-            serializer.save(author=request.user, article=article)
+            comment = serializer.save(author=request.user, article=article)
+
+            # find all user's who have favorited this article
+            users = [favorite.user_id for favorite in Favorite.objects.filter(article_id=article.id)]
+            users.append(comment.article.author)
+
+            # notify them and the author of new interaction
+            send_notifications(request,
+                               notification_type="article_comment",
+                               instance=comment,
+                               recipients=users)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Articles.DoesNotExist:
             return Response({"errors": COMMENTS_MSG['ARTICLE_DOES_NOT_EXIST']}, status=status.HTTP_404_NOT_FOUND)

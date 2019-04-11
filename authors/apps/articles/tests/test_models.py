@@ -14,7 +14,7 @@ class ArticleTest(TestCase):
             password="Pa@bbgbh"
         )
         self.article = Articles.objects.create(
-            author=self.user,
+            author=User.objects.first(),
             title="the 3 musketeers",
             body="is a timeless story",
             description="not written by me"

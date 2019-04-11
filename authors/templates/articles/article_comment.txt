@@ -1,0 +1,3 @@
+{{ user.get_full_name }} left a new comment on {{ article.title }}
+
+{{ user.get_full_name }}: {{ comment.body }}

@@ -15,6 +15,7 @@ from authors.apps.articles.serializers import ArticleSerializer, RatingsSerializ
 from authors.apps.authentication.permissions import IsVerifiedUser
 from .models import LikeDislike
 from .serializers import FavoriteSerializer
+from authors.apps.core.utils import send_notifications
 
 
 class ArticleNotFound(Exception):
@@ -43,7 +44,14 @@ class CreateArticlesAPIView(APIView):
         article = request.data.get('article', {})
         serializer = self.serializer_class(data=article)
         serializer.is_valid(raise_exception=True)
-        serializer.save(author=request.user)
+        article = serializer.save(author=request.user)
+
+        # notify all followers of new content
+        send_notifications(request,
+                           notification_type="article_published",
+                           instance=article,
+                           recipients=article.author.profile.followers)
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -54,8 +62,7 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
     only an article owner can edit or delete his/her article
     """
 
-    permission_classes = (IsAuthenticatedOrReadOnly,
-                          IsOwnerOrReadOnly, IsVerifiedUser,)
+    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, IsVerifiedUser,)
     serializer_class = ArticleSerializer
     renderer_classes = (ArticleJSONRenderer,)
 
@@ -183,7 +190,14 @@ class CreateListRatingsAPIView(APIView):
             Ratings.objects.get(article_id=article_id, author=author)
             return Response({'errors': 'cannot rate an article twice'}, status=status.HTTP_400_BAD_REQUEST)
         except:
-            serializer.save(author=request.user, article=article)
+            rating = serializer.save(author=request.user, article=article)
+
+            # notify author of new interaction
+            send_notifications(request,
+                               notification_type="article_rated",
+                               instance=rating,
+                               recipients=[rating.article.author])
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -315,8 +329,11 @@ class LikesView(APIView):
             else:
                 like_dislike.delete()
         except LikeDislike.DoesNotExist:
-            obj.likes.create(user=request.user, vote=self.vote_type)
-
+            like_dislike = obj.likes.create(user=request.user, vote=self.vote_type)
+            send_notifications(request,
+                               notification_type="resource_liked",
+                               instance=like_dislike,
+                               recipients=[like_dislike.article.author])
         return Response(
             {
                 "like_count": obj.likes.likes(),

@@ -1,10 +1,12 @@
 import re
 
-from django.contrib.auth import authenticate
 from django.core.validators import RegexValidator, ValidationError
-from rest_framework import serializers
+from authors.apps.profiles.serializers import GetProfileSerializer
+from .models import User, PasswordReset, UserNotification
 from rest_framework.validators import UniqueValidator
-
+from notifications.models import Notification
+from django.contrib.auth import authenticate
+from rest_framework import serializers
 from .error_messages import errors
 
 
@@ -13,11 +15,6 @@ def email_validate(email):
 
     if not re.match(regex, email):
         raise ValidationError(errors['email']['invalid'])
-
-
-from .models import User, PasswordReset
-
-from authors.apps.profiles.serializers import GetProfileSerializer
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -257,3 +254,33 @@ class SetNewPasswordSerializer(serializers.Serializer):
             "required": "A password is required to complete registration"
         }
     )
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    source = UserSerializer(read_only=True)
+    source_display_name = serializers.CharField(max_length=150)
+    action = serializers.CharField(max_length=50)
+    category = serializers.CharField(max_length=50)
+    url = serializers.URLField()
+    short_description = serializers.CharField(max_length=100)
+    extra_data = serializers.JSONField(default={})
+    is_read = serializers.BooleanField(default=False)
+    create_date = serializers.DateTimeField(format="%c")
+    update_date = serializers.DateTimeField(format="%c")
+
+    class Meta:
+        model = Notification
+
+        fields = ['source', 'source_display_name', 'action', 'category', 'url', 'short_description', 'extra_data',
+                  'is_read', 'create_date', 'update_date']
+
+
+class UserNotificationSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    email_notifications = serializers.BooleanField()
+    in_app_notifications = serializers.BooleanField()
+
+    class Meta:
+        model = UserNotification
+
+        fields = ['user', 'email_notifications', 'in_app_notifications']

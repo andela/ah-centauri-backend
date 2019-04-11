@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 
 from authors.apps.authentication.models import User
 from authors.apps.authentication.permissions import IsVerifiedUser
+from authors.apps.core.utils import send_notifications
 from .exceptions import ProfileDoesNotExist
 from .models import CustomFollows
 from .models import Profile
@@ -189,6 +190,13 @@ class ProfileFollowUserAPIView(APIView):
                 )
             # Otherwise follow the author the current user has indicated
             current_user.profile.follows.add(user_details.profile)
+
+            # notify user of new follower
+            send_notifications(request,
+                               notification_type="user_followed",
+                               instance=current_user,
+                               recipients=[user_details])
+
             # Get the following & followers username list
             # And the following & followers count for the current user
             user_following_data = get_user_following_data(current_user)

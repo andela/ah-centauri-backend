@@ -1,0 +1,6 @@
+
+    Article {{ article.title }} has gotten a new rating from one of your readers,
+
+    {{ user.get_full_name }} : {{ remarks }}
+
+    Authors Haven Team.
