@@ -26,7 +26,7 @@ class Comment(TimeStampModel):
 
     def children(self):
         """
-        Handles retrieving all comments linked to the parent object
+        Handles retrieving all comments linked to the parent object on a specific article.
         :return: [comments]
         """
-        return Comment.objects.filter(parent=self)
+        return Comment.objects.filter(article=self.article, parent=self)
