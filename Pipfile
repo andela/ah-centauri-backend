@@ -59,6 +59,8 @@ django-filter = "==2.1.0"
 django-simple-history = "==2.7.2"
 drf-yasg = "==1.15.0"
 beautifulsoup4 = "*"
+google-auth = "*"
+facebook-sdk = "*"
 
 [requires]
 python_version = "3.7"

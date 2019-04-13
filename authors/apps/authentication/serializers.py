@@ -1,4 +1,5 @@
 import re
+from random import randint
 
 from django.core.validators import RegexValidator, ValidationError
 from authors.apps.profiles.serializers import GetProfileSerializer
@@ -7,7 +8,11 @@ from rest_framework.validators import UniqueValidator
 from notifications.models import Notification
 from django.contrib.auth import authenticate
 from rest_framework import serializers
+
+from authors.apps.authentication.validators import SocialValidation
+from authors.apps.profiles.serializers import GetProfileSerializer
 from .error_messages import errors
+from .models import User, PasswordReset
 
 
 def email_validate(email):
@@ -214,16 +219,6 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         return instance
 
 
-class SocialOAuthSerializer(serializers.Serializer):
-    """
-    Handles serialization and deserialization
-    of the request data of social auth
-    """
-    provider = serializers.CharField(max_length=20, required=True)
-    access_token = serializers.CharField(max_length=255, required=True)
-    access_token_secret = serializers.CharField(max_length=255, allow_blank=True, default="")
-
-
 class PasswordResetSerializer(serializers.ModelSerializer):
     """
     Handles serialization and deserialization of PasswordReset model
@@ -236,14 +231,14 @@ class PasswordResetSerializer(serializers.ModelSerializer):
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):
-    """ 
+    """
     Validate PasswordReset Request from a user
     """
     email = serializers.EmailField()
 
 
 class SetNewPasswordSerializer(serializers.Serializer):
-    """ 
+    """
     Validate the password being created by the password reset endpoint
     """
 
@@ -291,3 +286,160 @@ class UserNotificationSerializer(serializers.ModelSerializer):
         model = UserNotification
 
         fields = ['user', 'email_notifications', 'in_app_notifications']
+
+
+class GoogleAuthAPISerializer(serializers.ModelSerializer):
+    """Handles serialization and deserialization of User objects."""
+
+    access_token = serializers.CharField()
+
+    class Meta:
+        model = User
+        fields = ['access_token']
+
+    @staticmethod
+    def validate_access_token(access_token):
+        """
+        Handles validating the request token by decoding and getting user_info associated
+        To an account on google.
+        Then authenticate the user.
+        :param access_token:
+        :return: user_token
+        """
+        id_info = SocialValidation.google_auth_validation(access_token=access_token)
+
+        # checks if the data retrieved once token is decoded is empty.
+        if id_info is None:
+            raise serializers.ValidationError('Token is not valid.')
+
+        user_id = id_info['sub']
+
+        # Checks to see if there is a user id associated with the payload after decoding the token
+        # this user_id confirms that the user exists on twitter because its a unique identifier.
+        if user_id is None:
+            raise serializers.ValidationError('Token is not valid or has expired. Please get a new one.')
+        # Query database to check if there is an existing user with the save email.
+        user = User.objects.filter(email=id_info.get('email'))
+
+        # Returns the user token showing that the user has been registered before and existing in our database.
+        if user:
+            return user[0].token
+
+        # Creates a new user because email is not associated with any existing account in our app
+        payload = {
+            'email': id_info.get('email'),
+            'username': id_info.get('email'),
+            'password': randint(10000000, 20000000)
+        }
+        new_user = User.objects.create_user(**payload)
+        new_user.is_verified = True
+        new_user.social_id = user_id
+        new_user.save()
+
+        return new_user.token
+
+
+class FacebookAuthAPISerializer(serializers.ModelSerializer):
+    """Handles serialization and deserialization of User objects."""
+
+    access_token = serializers.CharField()
+
+    class Meta:
+        model = User
+        fields = ['access_token']
+
+    @staticmethod
+    def validate_access_token(access_token):
+        """
+        Handles validating the request token by decoding and getting user_info associated
+        To an account on facebook.
+        Then authenticate the user.
+        :param access_token:
+        :return: user_token
+        """
+        id_info = SocialValidation.facebook_auth_validation(access_token=access_token)
+
+        # checks if the data retrieved once token is decoded is empty.
+        if id_info is None:
+            raise serializers.ValidationError('Token is not valid.')
+
+        user_id = id_info['id']
+
+        # Checks to see if there is a user id associated with the payload after decoding the token
+        # this user_id confirms that the user exists on twitter because its a unique identifier.
+        if user_id is None:
+            raise serializers.ValidationError('Token is not valid or has expired. Please get a new one.')
+        # Query database to check if there is an existing user with the save email.
+        user = User.objects.filter(email=id_info.get('email'))
+
+        # Returns the user token showing that the user has been registered before and existing in our database.
+        if user:
+            return user[0].token
+
+        # Creates a new user because email is not associated with any existing account in our app
+        payload = {
+            'email': id_info.get('email'),
+            'username': id_info.get('email'),
+            'password': randint(10000000, 20000000)
+        }
+        new_user = User.objects.create_user(**payload)
+        new_user.is_verified = True
+        new_user.social_id = user_id
+        new_user.save()
+
+        return new_user.token
+
+
+class TwitterAuthAPISerializer(serializers.ModelSerializer):
+    """Handles serialization and deserialization of User objects."""
+
+    access_token = serializers.CharField()
+    access_token_secret = serializers.CharField()
+
+    class Meta:
+        model = User
+        fields = ['access_token', 'access_token_secret']
+
+    def validate(self, data):
+        """
+        Handles validating the request token by decoding and getting user_info associated
+        To an account on twitter.
+        Then authenticate the user.
+        :param data:
+        :return: user_token
+        """
+        id_info = SocialValidation.twitter_auth_validation(access_token=data.get('access_token'),
+                                                           access_token_secret=data.get('access_token_secret'))
+        # Check if there is an error message in the id_info validation body
+        if 'errors' in id_info:
+            raise serializers.ValidationError(id_info.get('errors')[0]['message'])
+
+        # checks if the data retrieved once token is decoded is empty.
+        if id_info is None:
+            raise serializers.ValidationError('Token is not valid.')
+
+        user_id = id_info['id_str']
+
+        # Checks to see if there is a user id associated with the payload after decoding the token
+        # this user_id confirms that the user exists on twitter because its a unique identifier.
+        if user_id is None:
+            raise serializers.ValidationError('Token is not valid or has expired. Please get a new one.')
+        # Query database to check if there is an existing user with the save email.
+        user = User.objects.filter(email=id_info.get('email'))
+
+        # Returns the user token showing that the user has been registered before and existing in our database.
+        if user:
+            return user[0].token
+
+        # Creates a new user because email is not associated with any existing account in our app
+        payload = {
+            'email': id_info.get('email'),
+            'username': id_info.get('email'),
+            'password': randint(10000000, 20000000)
+        }
+        new_user = User.objects.create_user(**payload)
+        new_user.is_verified = True
+        new_user.social_id = user_id
+        new_user.save()
+
+        return new_user.token
