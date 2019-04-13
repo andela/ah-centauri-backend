@@ -28,7 +28,7 @@ urlpatterns = [
     path('verify-email/<token>/<uidb64>/',
          VerifyEmailView.as_view(), name='verify'),
     path('me/notifications', NotificationsView.as_view(), name='notifications'),
-    path('notification/settings', NotificationSettingsView.as_view(), name='notification_settings')
+    path('notification/settings', NotificationSettingsView.as_view(), name='notification_settings'),
     path('users/google/', GoogleAuthAPIView.as_view(), name='google'),
     path('users/facebook/', FacebookAuthAPIView.as_view(), name='facebook'),
     path('users/twitter/', TwitterAuthAPIView.as_view(), name='twitter'),

@@ -1,9 +1,12 @@
 import re
 from random import randint
 
-from django.core.validators import RegexValidator, ValidationError
+from django.core.validators import (RegexValidator,
+                                    ValidationError, )
 from authors.apps.profiles.serializers import GetProfileSerializer
-from .models import User, PasswordReset, UserNotification
+from .models import (User,
+                     PasswordReset,
+                     UserNotification, )
 from rest_framework.validators import UniqueValidator
 from notifications.models import Notification
 from django.contrib.auth import authenticate
@@ -12,7 +15,8 @@ from rest_framework import serializers
 from authors.apps.authentication.validators import SocialValidation
 from authors.apps.profiles.serializers import GetProfileSerializer
 from .error_messages import errors
-from .models import User, PasswordReset
+from .models import (User,
+                     PasswordReset, )
 
 
 def email_validate(email):
@@ -312,12 +316,12 @@ class GoogleAuthAPISerializer(serializers.ModelSerializer):
         if id_info is None:
             raise serializers.ValidationError('Token is not valid.')
 
-        user_id = id_info['sub']
-
         # Checks to see if there is a user id associated with the payload after decoding the token
         # this user_id confirms that the user exists on twitter because its a unique identifier.
-        if user_id is None:
+        if 'sub' not in id_info:
             raise serializers.ValidationError('Token is not valid or has expired. Please get a new one.')
+
+        user_id = id_info['sub']
         # Query database to check if there is an existing user with the save email.
         user = User.objects.filter(email=id_info.get('email'))
 
@@ -363,12 +367,13 @@ class FacebookAuthAPISerializer(serializers.ModelSerializer):
         if id_info is None:
             raise serializers.ValidationError('Token is not valid.')
 
-        user_id = id_info['id']
-
         # Checks to see if there is a user id associated with the payload after decoding the token
         # this user_id confirms that the user exists on twitter because its a unique identifier.
-        if user_id is None:
+        if 'id' not in id_info:
             raise serializers.ValidationError('Token is not valid or has expired. Please get a new one.')
+
+        user_id = id_info['id']
+
         # Query database to check if there is an existing user with the save email.
         user = User.objects.filter(email=id_info.get('email'))
 
@@ -418,18 +423,19 @@ class TwitterAuthAPISerializer(serializers.ModelSerializer):
         if id_info is None:
             raise serializers.ValidationError('Token is not valid.')
 
-        user_id = id_info['id_str']
-
         # Checks to see if there is a user id associated with the payload after decoding the token
         # this user_id confirms that the user exists on twitter because its a unique identifier.
-        if user_id is None:
+        if 'id_str' not in id_info:
             raise serializers.ValidationError('Token is not valid or has expired. Please get a new one.')
+
+        user_id = id_info['id_str']
+
         # Query database to check if there is an existing user with the save email.
         user = User.objects.filter(email=id_info.get('email'))
 
         # Returns the user token showing that the user has been registered before and existing in our database.
         if user:
-            return user[0].token
+            return {"token": user[0].token}
 
         # Creates a new user because email is not associated with any existing account in our app
         payload = {
@@ -437,9 +443,12 @@ class TwitterAuthAPISerializer(serializers.ModelSerializer):
             'username': id_info.get('email'),
             'password': randint(10000000, 20000000)
         }
-        new_user = User.objects.create_user(**payload)
-        new_user.is_verified = True
-        new_user.social_id = user_id
-        new_user.save()
+        try:
+            new_user = User.objects.create_user(**payload)
+            new_user.is_verified = True
+            new_user.social_id = user_id
+            new_user.save()
+        except:
+            raise serializers.ValidationError('Error While creating User.')
 
-        return new_user.token
+        return {"token": new_user.token}

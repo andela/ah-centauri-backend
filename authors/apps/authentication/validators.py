@@ -77,7 +77,6 @@ class SocialValidation:
         :param access_token_secret:
         :return:
         """
-        # import pdb;pdb.set_trace()
         url = 'https://api.twitter.com/1.1/account/verify_credentials.json'
         try:
             twitter = OAuth1Session(client_key=os.environ.get('SOCIAL_AUTH_TWITTER_KEY'),

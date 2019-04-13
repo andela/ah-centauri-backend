@@ -1,13 +1,19 @@
+from unittest.mock import patch
+
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.serializers import ValidationError
 
 from authors.apps.authentication.error_messages import errors
 from authors.apps.authentication.models import User, PasswordReset
-from authors.apps.authentication.serializers import LoginSerializer
-from authors.apps.authentication.serializers import PasswordResetRequestSerializer
-from authors.apps.authentication.serializers import PasswordResetSerializer
-from authors.apps.authentication.serializers import RegistrationSerializer
-from authors.apps.authentication.serializers import UserSerializer
+from authors.apps.authentication.serializers import (LoginSerializer,
+                                                     PasswordResetRequestSerializer,
+                                                     PasswordResetSerializer,
+                                                     RegistrationSerializer,
+                                                     UserSerializer,
+                                                     GoogleAuthAPISerializer,
+                                                     FacebookAuthAPISerializer,
+                                                     )
 from authors.apps.authentication.utils import PasswordResetTokenHandler
 
 
@@ -342,3 +348,111 @@ class PasswordResetRequestSerializerTest(TestCase):
             data=self.password_reset_request_payload_invalid
         )
         self.assertFalse(serializer.is_valid())
+
+
+GOOGLE_VALIDATION = "authors.apps.authentication.validators.SocialValidation.google_auth_validation"
+FACEBOOK_VALIDATION = "authors.apps.authentication.validators.SocialValidation.facebook_auth_validation"
+TWITTER_VALIDATION = "authors.apps.authentication.validators.SocialValidation.twitter_auth_validation"
+
+
+def sample_user():
+    return get_user_model().objects.create_user(email='cmeordvda_1554574357@tfbnw.net',
+                                                username='cmeordvda',
+                                                password='T35tP45w0rd'
+                                                )
+
+
+class GoogleSerializerTest(TestCase):
+    """
+    Unit test for the GoogleSerializer
+    class defined in our serializers.
+    """
+
+    def setUp(self):
+        self.payload = {
+            "access_token": "access_token"
+        }
+
+    def test_valid_google_login(self):
+        with patch(GOOGLE_VALIDATION) as mg:
+            mg.return_value = {
+                "name": "alexa",
+                "email": "alexa@gmail.com",
+                "sub": "102723377587866"
+            }
+            serializer = GoogleAuthAPISerializer(data=self.payload)
+            self.assertTrue(serializer.is_valid())
+
+    def test_in_valid_google_login(self):
+        serializer = GoogleAuthAPISerializer(data=self.payload)
+        self.assertFalse(serializer.is_valid())
+
+    def test_sub_is_not_found_in_payload(self):
+        with patch(GOOGLE_VALIDATION) as mg:
+            mg.return_value = {
+                "name": "alexa",
+                "email": "cmeordvda_1554574357@tfbnw.net"
+            }
+            serializer = GoogleAuthAPISerializer(data=self.payload)
+
+            self.assertFalse(serializer.is_valid())
+
+    def test_login_user_already_exist(self):
+        sample_user()
+        with patch(GOOGLE_VALIDATION) as mg:
+            mg.return_value = {
+                "name": "alexa",
+                "email": "alexa@gmail.com",
+                "sub": "102723377587866"
+            }
+            serializer = GoogleAuthAPISerializer(data=self.payload)
+            self.assertTrue(serializer.is_valid())
+            self.assertIn('access_token', serializer.data)
+
+
+class FacebookSerializerTest(TestCase):
+    """
+    Unit test for the FacebookSerializer
+    class defined in our serializers.
+    """
+
+    def setUp(self):
+        self.payload = {
+            "access_token": "access_token"
+        }
+
+    def test_valid_google_login(self):
+        with patch(FACEBOOK_VALIDATION) as mg:
+            mg.return_value = {
+                "name": "alexa",
+                "email": "alexa@gmail.com",
+                "id": "102723377587866"
+            }
+            serializer = FacebookAuthAPISerializer(data=self.payload)
+            self.assertTrue(serializer.is_valid())
+
+    def test_in_valid_facebook_login(self):
+        serializer = FacebookAuthAPISerializer(data=self.payload)
+        self.assertFalse(serializer.is_valid())
+
+    def test_id_is_not_found_in_payload(self):
+        with patch(FACEBOOK_VALIDATION) as mg:
+            mg.return_value = {
+                "name": "alexa",
+                "email": "cmeordvda_1554574357@tfbnw.net"
+            }
+            serializer = FacebookAuthAPISerializer(data=self.payload)
+
+            self.assertFalse(serializer.is_valid())
+
+    def test_login_user_already_exist(self):
+        sample_user()
+        with patch(FACEBOOK_VALIDATION) as mg:
+            mg.return_value = {
+                "name": "alexa",
+                "email": "alexa@gmail.com",
+                "id": "102723377587866"
+            }
+            serializer = FacebookAuthAPISerializer(data=self.payload)
+            self.assertTrue(serializer.is_valid())
+            self.assertIn('access_token', serializer.data)
