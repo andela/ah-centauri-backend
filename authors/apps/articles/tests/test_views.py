@@ -198,7 +198,7 @@ class ViewTest(TestCase):
             **self.headers,
             format='json'
         )
-        self.assertEqual(response1.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response1.status_code, status.HTTP_200_OK)
 
     def test_delete_an_article_no_auth(self):
         response = self.test_create_article_method()

@@ -28,7 +28,7 @@ class RatingsviewsTest(TestCase):
         self.user = User.objects.create(
             username='user',
             email='user@mail.com',
-            password='password'
+            password='Password123@'
         )
         self.user.is_verified = True
         self.user.save()
@@ -37,7 +37,7 @@ class RatingsviewsTest(TestCase):
         self.user2 = User.objects.create(
             username='user5',
             email='user5@mail.com',
-            password='password'
+            password='Password123!'
         )
         self.user2.is_verified = True
         self.user2.save()
@@ -173,7 +173,7 @@ class RatingsviewsTest(TestCase):
             my_url,
             **self.headers
         )
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         return response
 
     def test_delete_rating_no_auth(self):

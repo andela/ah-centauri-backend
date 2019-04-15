@@ -1,9 +1,9 @@
-
 from rest_framework import serializers
 import readtime
 from authors.apps.articles.models import Articles, Ratings
 from authors.apps.authentication.serializers import UserSerializer
-from authors.apps.articles.models import Articles, Ratings, Favorite
+from authors.apps.articles.models import Articles, Ratings, Favorite, ReportArticles
+from authors.apps.articles.utils import ChoicesField
 from authors.apps.authentication.serializers import UserSerializer
 
 
@@ -16,7 +16,6 @@ class ArticleSerializer(serializers.HyperlinkedModelSerializer):
     description = serializers.CharField(required=True, max_length=140)
     author = serializers.ReadOnlyField(source='get_author')
     average_rating = serializers.ReadOnlyField(source='get_average_rating')
-    author = UserSerializer(required=False)
     likes = serializers.ReadOnlyField(source='likes.likes')
     dislikes = serializers.ReadOnlyField(source='likes.dislikes')
     # string describe the read time of an article e.g '1 min read'
@@ -111,3 +110,26 @@ class FavoriteSerializer(serializers.ModelSerializer):
         model = Favorite
         fields = ('id', 'user_id', 'article_id')
         read_only_fields = ['id']
+
+
+
+
+# add reports serializer
+class ReportsSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    author = serializers.ReadOnlyField(source='reporter.username')
+    article = serializers.ReadOnlyField(source='article.title')
+    slug = serializers.ReadOnlyField(source='article.slug')
+    report = serializers.CharField(max_length=140)
+    type_of_report = ChoicesField(choices=["spam", "harassment", "rules violation", "plagiarism"])
+
+    class Meta:
+        model = ReportArticles
+        fields = ('id', 'created_at', 'updated_at', 'author', 'article', 'type_of_report', 'slug',
+                'report')
+        extra_kwargs = {
+            'url': {
+                'view_name': 'reports:report-detail'
+            }
+        }
+
