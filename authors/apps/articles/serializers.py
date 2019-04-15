@@ -1,14 +1,16 @@
-from rest_framework import serializers
 from urllib import parse
+
 import readtime
-from authors.apps.articles.models import Articles, Ratings, Favorite, ReportArticles
-from authors.apps.articles.utils import ChoicesField
-from taggit_serializer.serializers import (TagListSerializerField,
-                                           TaggitSerializer)
 from django.urls import reverse
+from rest_framework import serializers
+from taggit_serializer.serializers import (TagListSerializerField,
+                                           TaggitSerializer, )
 
-from authors.apps.authentication.serializers import UserSerializer
-
+from authors.apps.articles.models import (Articles,
+                                          Ratings,
+                                          Favorite,
+                                          ReportArticles, )
+from authors.apps.articles.utils import ChoicesField
 
 
 class TagSerializer(TagListSerializerField):
@@ -35,6 +37,7 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
     share_links = serializers.SerializerMethodField()
     # string describe the read time of an article e.g '1 min read'
     read_time = serializers.ReadOnlyField()
+    favorited = serializers.ReadOnlyField(source="favoriters")
 
     def to_representation(self, instance):
         """ Add the read time of the article."""
@@ -45,7 +48,6 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
         article_rep['read_time'] = str(readtime.of_html(article_rep['body']))
         # return the article's details along with it's read time
         return article_rep
-
 
     def get_share_links(self, obj):
         links = {}
@@ -102,7 +104,9 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
 
         fields = ('id', 'likes', 'dislikes', 'created_at', 'updated_at',
                   'author', 'title', 'tags', 'body', 'description',
-                  'average_rating', 'slug', 'read_time', 'share_links')
+                  'average_rating', 'slug', 'read_time', 'share_links',
+                  'favorited')
+
 
         extra_kwargs = {
             'url': {

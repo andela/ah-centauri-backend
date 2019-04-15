@@ -1,14 +1,27 @@
 from django.urls import path
 
-from authors.apps.articles.views import CreateArticlesAPIView, RetrieveUpdateDeleteArticleAPIView, FavoriteView, GetUserFavoritesView
-from authors.apps.articles.views import CreateListRatingsAPIView, RetrieveUpdateDeleteRatingAPIView, LikesView, CreateListAuthorsAPIView
-from authors.apps.articles.views import CreateListReportsAPIView, RetrieveUpdateDeleteReportAPIView, ListReportsAPIView
+from authors.apps.articles.views import (
+    CreateArticlesAPIView,
+    RetrieveUpdateDeleteArticleAPIView,
+    LikesView,
+    FavoriteView,
+    GetUserFavoritesView,
+    CreateListRatingsAPIView,
+    RetrieveUpdateDeleteRatingAPIView,
+    CreateListReportsAPIView,
+    RetrieveUpdateDeleteReportAPIView,
+    ListReportsAPIView,
+    CreateListAuthorsAPIView
+)
+from authors.apps.search.views import SearchArticleListAPIView
 from .models import Articles, LikeDislike
 
 app_name = 'articles'
 
+
 urlpatterns = [
     path('articles/', CreateArticlesAPIView.as_view(), name='articles'),
+    path('articles/q', SearchArticleListAPIView.as_view(), name='search'),
     path('articles/<slug:slug>/',
          RetrieveUpdateDeleteArticleAPIView.as_view(), name='article'),
     path('articles/<slug:slug>/ratings/',

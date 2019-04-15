@@ -1,16 +1,15 @@
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.contenttypes.fields import (GenericForeignKey,
+                                                GenericRelation, )
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Avg
 from django.utils.text import slugify
-from django.conf import settings
+from taggit.managers import TaggableManager
 
+from authors.apps.core.models import TimeStampModel
 from authors.apps.profiles.models import Profile
 from authors.apps.profiles.serializers import GetProfileSerializer
 from ..authentication.models import User
-from authors.apps.core.models import TimeStampModel
-from taggit.managers import TaggableManager
 
 
 class LikeDislikeManager(models.Manager):
@@ -107,6 +106,19 @@ class Articles(TimeStampModel):
             "image" : user.data['image']
         }
         return author
+
+    @property
+    def favoriters(self):
+        queryset = Favorite.objects.filter(article_id=self)
+        favoriters = []
+        for favoriter in queryset:
+            profile = Profile.objects.get(user=favoriter.user_id)
+            user = GetProfileSerializer(profile).data['username']
+            favoriters.append(user)
+        return favoriters
+
+    class Meta:
+        ordering = ('-created_at',)
 
 
 # add ratings model
