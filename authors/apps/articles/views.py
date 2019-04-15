@@ -6,11 +6,11 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticate
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
-
+from rest_framework.pagination import LimitOffsetPagination
 
 from authors.apps.authentication.models import User
 from authors.apps.authentication.serializers import UserSerializer
-from authors.apps.articles.models import Articles, Favorite
+from authors.apps.articles.models import Articles, Favorite, Ratings
 from authors.apps.articles.models import Ratings, ReportArticles
 from authors.apps.articles.permissions import IsOwnerOrReadOnly, IsVerified
 from authors.apps.articles.renderers import ArticleJSONRenderer
@@ -32,11 +32,14 @@ class CreateArticlesAPIView(APIView):
     permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser,)
     serializer_class = ArticleSerializer
     renderer_classes = (ArticleJSONRenderer,)
+    pagination_class = LimitOffsetPagination
 
     def get(self, request, format=None):
         articles = Articles.objects.all()
-        serializer = ArticleSerializer(articles, many=True, context={'request': request})
-        return Response({'data': serializer.data, 'articlesCount': len(serializer.data)}, status=status.HTTP_200_OK)
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(articles, request)
+        serializer = self.serializer_class(page, many=True, context={'request': request})
+        return paginator.get_paginated_response(serializer.data)
 
     def post(self, request):
         article = request.data.get('article', {})
@@ -75,7 +78,7 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
         Returns
         --------
         an article object if found
-        raises an excepition if not found
+        raises an exception if not found
 
         """
         try:
@@ -457,7 +460,7 @@ class ListReportsAPIView(APIView):
         if reports:
             serializer = ReportsSerializer(reports, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response({"errors" : ERROR_MESSAGES['not found']}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"errors": ERROR_MESSAGES['not found']}, status=status.HTTP_404_NOT_FOUND)
 
 
 class CreateListReportsAPIView(APIView):
@@ -468,7 +471,7 @@ class CreateListReportsAPIView(APIView):
     serializer_class = ReportsSerializer
     renderer_classes = (ReportJSONRenderer,)
     permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser,)
-    
+
     def get_object(self, slug):
         """
         Method to get an article
@@ -517,7 +520,6 @@ class CreateListReportsAPIView(APIView):
 
         rating = serializer.save(author=request.user, article=article)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
     def get(self, request, slug):
         """
@@ -639,7 +641,7 @@ class CreateListAuthorsAPIView(ListAPIView):
     permission_classes = (IsAuthenticated, IsVerified,)
     serializer_class = UserSerializer
     queryset = User.objects.all()
-    
+
     def get_queryset(self):
         articles = Articles.objects.values_list('author_id', flat=True).distinct()
         users = User.objects.filter(id__in=articles)
