@@ -1,5 +1,6 @@
-from rest_framework import serializers
 
+from rest_framework import serializers
+import readtime
 from authors.apps.articles.models import Articles, Ratings
 from authors.apps.authentication.serializers import UserSerializer
 from authors.apps.articles.models import Articles, Ratings, Favorite
@@ -8,7 +9,9 @@ from authors.apps.authentication.serializers import UserSerializer
 
 class ArticleSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    title = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    title = serializers.CharField(
+        required=True,
+        max_length=100)
     body = serializers.CharField()
     description = serializers.CharField(required=True, max_length=140)
     author = serializers.ReadOnlyField(source='get_author')
@@ -16,6 +19,18 @@ class ArticleSerializer(serializers.HyperlinkedModelSerializer):
     author = UserSerializer(required=False)
     likes = serializers.ReadOnlyField(source='likes.likes')
     dislikes = serializers.ReadOnlyField(source='likes.dislikes')
+    # string describe the read time of an article e.g '1 min read'
+    read_time = serializers.ReadOnlyField()
+
+    def to_representation(self, instance):
+        """ Add the read time of the article."""
+        article_rep = super().to_representation(instance)
+        # Get read time for an article instance,
+        #  given it has HTML elements e.g images
+        # read time (seconds) = num_words / 265 * 60 + img_weight * num_images
+        article_rep['read_time'] = str(readtime.of_html(article_rep['body']))
+        # return the article's details along with it's read time
+        return article_rep
 
     def create(self, validated_data):
         """
@@ -25,11 +40,13 @@ class ArticleSerializer(serializers.HyperlinkedModelSerializer):
 
     def update(self, instance, validated_data):
         """
-        Update and return an existing `Article` instance, given the validated data.
+        Update and return an existing `Article`, given the validated data.
         """
         instance.title = validated_data.get('title', instance.title)
         instance.body = validated_data.get('body', instance.body)
-        instance.description = validated_data.get('description', instance.description)
+        instance.description = validated_data.get(
+            'description',
+            instance.description)
         if validated_data.get('title'):
             instance.slug = instance.get_unique_slug()
         instance.save()
@@ -37,8 +54,9 @@ class ArticleSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Articles
-        fields = ('id', 'likes', 'dislikes', 'created_at', 'updated_at', 'author',
-                  'title', 'body', 'description', 'average_rating', 'slug')
+        fields = ('id', 'likes', 'dislikes', 'created_at', 'updated_at',
+                  'author', 'title', 'body', 'description',
+                  'average_rating', 'slug', 'read_time')
         extra_kwargs = {
             'url': {
                 'view_name': 'articles:article-detail'
@@ -70,7 +88,8 @@ class RatingsSerializer(serializers.ModelSerializer):
 
         """
         if not (0 < data < 6):
-            raise serializers.ValidationError('please keep range of rating from 1-5')
+            raise serializers.ValidationError(
+                'please keep range of rating from 1-5')
         return data
 
     class Meta:
