@@ -8,6 +8,7 @@ from django.conf import settings
 
 from authors.apps.authentication.serializers import UserSerializer
 from ..authentication.models import User
+from authors.apps.core.models import TimeStampModel
 
 
 class LikeDislikeManager(models.Manager):
@@ -59,10 +60,8 @@ class LikeDislike(models.Model):
         return self.articles.first()
 
 
-class Articles(models.Model):
+class Articles(TimeStampModel):
     likes = GenericRelation(LikeDislike, related_query_name='articles')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     author = models.ForeignKey('authentication.User', related_name='articles',
                                on_delete=models.CASCADE, null=False, default='')
     title = models.CharField(max_length=100, default='')
@@ -110,11 +109,9 @@ class Articles(models.Model):
 
 
 # add ratings model
-class Ratings(models.Model):
+class Ratings(TimeStampModel):
     author = models.ForeignKey('authentication.User', related_name='ratings', on_delete=models.CASCADE, null=False)
     article = models.ForeignKey('articles.Articles', related_name='ratings', on_delete=models.CASCADE, null=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     value = models.IntegerField(null=False)
     review = models.TextField(blank=True)
     slug = models.SlugField(max_length=140, blank=True)
@@ -131,3 +128,32 @@ class Favorite(models.Model):
     """Implement storage of favorites"""
     user_id = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='favorites')
     article_id = models.ForeignKey('articles.articles', on_delete=models.CASCADE, related_name='favorites')
+
+
+class ReportArticles(TimeStampModel):
+    """ Model to hold instances of reports posted by users. """
+    PLAGIARISM = 'plagiarism'
+    SPAM = 'spam'
+    HARASSMENT = 'harassment'
+    RULES_VIOLATION = 'rules violation'
+    REPORT_CHOICES = (
+        (PLAGIARISM, 'plagiarism'),
+        (SPAM, 'spam'),
+        (HARASSMENT, 'harassment'),
+        (RULES_VIOLATION, 'rules violation'),
+    )
+    author = models.ForeignKey('authentication.User', related_name='reports', on_delete=models.CASCADE, null=False)
+    article =  models.ForeignKey('articles.Articles', related_name='reports', on_delete=models.CASCADE, null=False)
+    report = models.CharField(max_length=140)
+    type_of_report = models.CharField(
+        max_length=20,
+        choices=REPORT_CHOICES,
+        default=''
+    )
+
+    def __str__(self):
+        return self.report
+
+    class Meta:
+        ordering = ('-created_at',)
+

@@ -2,28 +2,22 @@ from django.contrib.contenttypes.models import ContentType
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.generics import RetrieveUpdateAPIView
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from authors.apps.articles.models import Articles, Favorite
-from authors.apps.articles.models import Ratings
+from authors.apps.articles.models import Ratings, ReportArticles
 from authors.apps.articles.permissions import IsOwnerOrReadOnly
 from authors.apps.articles.renderers import ArticleJSONRenderer
-from authors.apps.articles.renderers import RatingJSONRenderer
-from authors.apps.articles.serializers import ArticleSerializer, RatingsSerializer
+from authors.apps.articles.renderers import RatingJSONRenderer, ReportJSONRenderer
+from authors.apps.articles.serializers import ArticleSerializer, RatingsSerializer, ReportsSerializer
+from authors.apps.articles.exceptions import ArticleNotFound, RatingNotFound, ReportNotFound
+from authors.apps.articles.response_messages import ERROR_MESSAGES
 from authors.apps.authentication.permissions import IsVerifiedUser
 from .models import LikeDislike
 from .serializers import FavoriteSerializer
 from authors.apps.core.utils import send_notifications
-
-
-class ArticleNotFound(Exception):
-    pass
-
-
-class RatingNotFound(Exception):
-    pass
 
 
 class CreateArticlesAPIView(APIView):
@@ -102,7 +96,7 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
         article = self.get_object(slug)
         self.check_object_permissions(request, article)
         article.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_200_OK)
 
 
 # add ratings views
@@ -213,16 +207,16 @@ class RetrieveUpdateDeleteRatingAPIView(APIView):
 
     def get_object(self, pk):
         """
-        Method to return an article 
+        Method to return a rating
 
         Params
         -------
-        slug: referende to article to be returned
+        pk: reference to rating to be returned
 
         Returns
         --------
-        an article object if found
-        raises an excepition if not found
+        a rating object if found
+        raises an exception if not found
         
         """
         try:
@@ -289,7 +283,7 @@ class RetrieveUpdateDeleteRatingAPIView(APIView):
         rating = self.get_object(pk)
         self.check_object_permissions(request, rating)
         rating.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_200_OK)
 
 
 class LikesView(APIView):
@@ -430,3 +424,204 @@ class GetUserFavoritesView(APIView):
             "favorites": favorite_articles
         }
         return Response(data=favorites, status=status.HTTP_200_OK)
+
+
+class ListReportsAPIView(APIView):
+    """
+    View to handle fetching of reports for particular articles.
+    Allow any users to fetch reports.
+    """
+    serializer_class = ReportsSerializer
+    renderer_classes = (ReportJSONRenderer,)
+    permission_classes = (IsAuthenticated, )
+
+    def get(self, request):
+        """
+        Method to get reports made by current user
+
+        Params
+        -------
+        request: Object with request data and functions.
+
+        Returns
+        --------
+        reports made by current user
+        error message if:
+             - any validation errors encountered
+        """
+        reports = ReportArticles.objects.filter(author=request.user)
+        if reports:
+            serializer = ReportsSerializer(reports, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({"errors" : ERROR_MESSAGES['not found']}, status=status.HTTP_404_NOT_FOUND)
+
+
+class CreateListReportsAPIView(APIView):
+    """
+    View to handle posting and fetching of reports by users.
+    Allow only both authenticated and verified users to post reports.
+    """
+    serializer_class = ReportsSerializer
+    renderer_classes = (ReportJSONRenderer,)
+    permission_classes = (IsAuthenticatedOrReadOnly, IsVerifiedUser,)
+    
+    def get_object(self, slug):
+        """
+        Method to get an article
+
+        Params
+        -------
+        slug: reference to article to be fetched
+
+        Returns
+        --------
+        article corresponding to given slug
+        raises an exception if not found
+        """
+        try:
+            return Articles.objects.get(slug=slug)
+        except Articles.DoesNotExist:
+            raise ArticleNotFound
+
+    def post(self, request, slug):
+        """
+        Method to post a report of a particular article
+
+        Params
+        -------
+        request: Object with request data and functions.
+        slug: reference to article to be reported
+
+        Returns
+        --------
+        report that has just been posted
+        error message if:
+            - you try to report your own article
+            - you are either not authenticated or not verified
+            - any other validation errors encountered
+        
+        """
+        report = request.data.get('report', {})
+        serializer = self.serializer_class(data=report)
+        serializer.is_valid(raise_exception=True)
+
+        article = self.get_object(slug)
+        author = request.user
+
+        if article.author == author:
+            return Response({'errors': ERROR_MESSAGES['forbidden']}, status=status.HTTP_400_BAD_REQUEST)
+
+        rating = serializer.save(author=request.user, article=article)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+    def get(self, request, slug):
+        """
+        Method to get reports related to current article
+
+        Params
+        -------
+        request: Object with request data and functions.
+        slug: reference to current article
+
+        Returns
+        --------
+        reports of current article
+        error message if:
+             - any validation errors encountered
+        """
+        article = self.get_object(slug)
+        reports = ReportArticles.objects.filter(article=article)
+        serializer = ReportsSerializer(reports, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class RetrieveUpdateDeleteReportAPIView(APIView):
+    """
+    Allow only authenticated users to hit these endpoints(save for the get endpoint).
+    List edit or delete a report
+    only a report owner can edit or delete his/her article
+    """
+    serializer_class = ReportsSerializer
+    renderer_classes = (ReportJSONRenderer,)
+    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, IsVerifiedUser)
+
+    def get_object(self, pk):
+        """
+        Method to return a report
+
+        Params
+        -------
+        pk: reference to report to be returned
+
+        Returns
+        --------
+        a report object if found
+        raises an exception if not found
+        
+        """
+        try:
+            return ReportArticles.objects.get(pk=pk)
+        except ReportArticles.DoesNotExist:
+            raise ReportNotFound
+
+    def get(self, request, pk, format=None):
+        """
+        Method to return a specific report
+
+        Params
+        -------
+        request: Object with request data and functions.
+        pk: reference to report to be returned
+
+        Returns
+        --------
+        report matching the pk
+        error message if not found
+
+        """
+        report = self.get_object(pk)
+        serializer = ReportsSerializer(report)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk, format=None):
+        """
+        Method to edit a specific report
+
+        Params
+        -------
+        request: Object with request data and functions.
+        pk: reference to report to be edited
+
+        Returns
+        --------
+        edited report matching the pk
+        error message if not found
+
+        """
+        report = self.get_object(pk)
+        self.check_object_permissions(request, report)
+        serializer = ReportsSerializer(report, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk, format=None):
+        """
+        Method to delete a specific report
+
+        Params
+        -------
+        request: Object with request data and functions.
+        pk: reference to report to be deleted
+
+        Returns
+        --------
+        success message upon deletion of said report
+        errors, if any
+
+        """
+        report = self.get_object(pk)
+        self.check_object_permissions(request, report)
+        report.delete()
+        return Response(status=status.HTTP_200_OK)

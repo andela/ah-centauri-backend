@@ -14,8 +14,8 @@ class EmailTest(TestCase):
         """Sets up the dependencies for the tests"""
         self.user_data = {
             'user': {
-                'email': 'user1@mail.com',
-                'username': 'user1',
+                'email': 'Steve@mail.com',
+                'username': 'Steve',
                 'password': 'Password#1'
             }
         }
@@ -41,7 +41,7 @@ class EmailTest(TestCase):
         """Tests if the verification link works"""
         res = self.sign_up_user()
         link = re.search(
-            r'http:\/\/[a-zA-Z0-9]+\/[a-z]+\/[a-z]+-[a-z]+\/[-0-9a-z]+\/[A-z]+\/',
+            r'http:\/\/[a-zA-Z0-9]+\/[a-z]+\/[a-z]+-[a-z]+\/[-0-9a-z]+\/[A-z]+[0-9]+\/',
             mail.outbox[0].body)
         url = link.group()
         res = self.client.get(url)
