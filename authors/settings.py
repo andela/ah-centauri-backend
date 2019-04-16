@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'social_django',
     'notifications',
+    'taggit',
+    'taggit_serializer',
 
     'authors.apps.authentication.apps.AuthenticationConfig',
     'authors.apps.core',
@@ -179,6 +181,8 @@ NOTIFICATIONS_CHANNELS = {
 }
 
 CELERY_TASK_ALWAYS_EAGER = True
+
+TAGGIT_CASE_INSENSITIVE = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/

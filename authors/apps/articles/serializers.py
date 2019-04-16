@@ -5,9 +5,20 @@ from authors.apps.authentication.serializers import UserSerializer
 from authors.apps.articles.models import Articles, Ratings, Favorite, ReportArticles
 from authors.apps.articles.utils import ChoicesField
 from authors.apps.authentication.serializers import UserSerializer
+from taggit_serializer.serializers import (TagListSerializerField,
+                                           TaggitSerializer)
 
 
-class ArticleSerializer(serializers.HyperlinkedModelSerializer):
+class TagSerializer(TagListSerializerField):
+    default_error_messages = {
+            'not_a_list': 
+                'Expected a list of items but got type "{input_type}".',
+            'invalid_json': 'tags provided must be in a list',
+            'not_a_str': 'All list items must be of string type.'
+        }
+
+
+class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
     title = serializers.CharField(
         required=True,
@@ -18,6 +29,7 @@ class ArticleSerializer(serializers.HyperlinkedModelSerializer):
     average_rating = serializers.ReadOnlyField(source='get_average_rating')
     likes = serializers.ReadOnlyField(source='likes.likes')
     dislikes = serializers.ReadOnlyField(source='likes.dislikes')
+    tags = TagSerializer()
     # string describe the read time of an article e.g '1 min read'
     read_time = serializers.ReadOnlyField()
 
@@ -30,32 +42,37 @@ class ArticleSerializer(serializers.HyperlinkedModelSerializer):
         article_rep['read_time'] = str(readtime.of_html(article_rep['body']))
         # return the article's details along with it's read time
         return article_rep
+    
 
     def create(self, validated_data):
         """
         Create and return a new `Article` instance, given the validated data.
         """
-        return Articles.objects.create(**validated_data)
+        tags = [tag.lower() for tag in validated_data.pop('tags')]
+        instance = super().create(validated_data)
+        instance.tags.set(*tags)
+        return instance
 
     def update(self, instance, validated_data):
         """
         Update and return an existing `Article`, given the validated data.
         """
+        tags = validated_data.pop('tags', instance.tags.all())
         instance.title = validated_data.get('title', instance.title)
         instance.body = validated_data.get('body', instance.body)
-        instance.description = validated_data.get(
-            'description',
-            instance.description)
+        instance.description = validated_data.get('description', instance.description)
+        instance.tags.set(*tags)
+
         if validated_data.get('title'):
             instance.slug = instance.get_unique_slug()
+
         instance.save()
         return instance
 
     class Meta:
         model = Articles
-        fields = ('id', 'likes', 'dislikes', 'created_at', 'updated_at',
-                  'author', 'title', 'body', 'description',
-                  'average_rating', 'slug', 'read_time')
+        fields = ('id', 'likes', 'dislikes', 'created_at', 'updated_at', 'author',
+                  'title', 'tags', 'body', 'description', 'average_rating', 'slug', 'read_time')
         extra_kwargs = {
             'url': {
                 'view_name': 'articles:article-detail'

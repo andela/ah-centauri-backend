@@ -14,7 +14,8 @@ class TestArticleSerializer(TestCase):
             "article": {
                 "title": "MS. Found in a bottle",
                 "body": "is a very good story",
-                "description": "was not written by me"
+                "description": "was not written by me",
+                "tags": ["bottler"]
             }
         }
 
@@ -42,3 +43,10 @@ class TestArticleSerializer(TestCase):
         serializer = ArticleSerializer(data=self.article["article"])
         serializer.is_valid()
         self.assertIn('min read', serializer.data['read_time'])
+    
+    def test_article_serializer_has_tags(self):
+        """Test if the serializer data has tags"""
+        serializer = ArticleSerializer(data=self.article["article"])
+        serializer.is_valid()
+        self.assertIn('bottler', serializer.data['tags'])
+
