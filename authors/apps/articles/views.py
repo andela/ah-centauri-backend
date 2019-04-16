@@ -35,7 +35,7 @@ class CreateArticlesAPIView(APIView):
 
     def get(self, request, format=None):
         articles = Articles.objects.all()
-        serializer = ArticleSerializer(articles, many=True)
+        serializer = ArticleSerializer(articles, many=True, context={'request': request})
         return Response({'data': serializer.data, 'articlesCount': len(serializer.data)}, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -85,7 +85,7 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
 
     def get(self, request, slug, format=None):
         article = self.get_object(slug)
-        serializer = ArticleSerializer(article)
+        serializer = ArticleSerializer(article, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, slug, format=None):
