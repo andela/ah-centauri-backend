@@ -55,7 +55,8 @@ class RatingsviewsTest(TestCase):
             'article': {
                 'title': 'alice in wonderland',
                 'body': 'life is unfair',
-                'description': 'one tree hill'
+                'description': 'one tree hill',
+                'tags': []
             }
         }
 

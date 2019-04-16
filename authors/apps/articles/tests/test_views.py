@@ -34,7 +34,8 @@ class ViewTest(TestCase):
             "article": {
                 "title": "MS. Found in a bottle",
                 "body": "is a very good story",
-                "description": "was not written by me"
+                "description": "was not written by me",
+                "tags": []
             }
         }
 

@@ -9,6 +9,7 @@ from django.conf import settings
 from authors.apps.authentication.serializers import UserSerializer
 from ..authentication.models import User
 from authors.apps.core.models import TimeStampModel
+from taggit.managers import TaggableManager
 
 
 class LikeDislikeManager(models.Manager):
@@ -68,6 +69,7 @@ class Articles(TimeStampModel):
     slug = models.SlugField(max_length=140, unique=True, blank=True)
     body = models.TextField()
     description = models.CharField(max_length=140, default='')
+    tags = TaggableManager()
 
     def __str__(self):
         return self.title
