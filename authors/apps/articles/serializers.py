@@ -1,21 +1,22 @@
+from collections import OrderedDict
+
 from rest_framework import serializers
+from urllib import parse
 import readtime
-from authors.apps.articles.models import Articles, Ratings
-from authors.apps.authentication.serializers import UserSerializer
 from authors.apps.articles.models import Articles, Ratings, Favorite, ReportArticles
 from authors.apps.articles.utils import ChoicesField
-from authors.apps.authentication.serializers import UserSerializer
 from taggit_serializer.serializers import (TagListSerializerField,
                                            TaggitSerializer)
+from django.urls import reverse
 
 
 class TagSerializer(TagListSerializerField):
     default_error_messages = {
-            'not_a_list': 
-                'Expected a list of items but got type "{input_type}".',
-            'invalid_json': 'tags provided must be in a list',
-            'not_a_str': 'All list items must be of string type.'
-        }
+        'not_a_list':
+            'Expected a list of items but got type "{input_type}".',
+        'invalid_json': 'tags provided must be in a list',
+        'not_a_str': 'All list items must be of string type.'
+    }
 
 
 class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer):
@@ -30,6 +31,7 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
     likes = serializers.ReadOnlyField(source='likes.likes')
     dislikes = serializers.ReadOnlyField(source='likes.dislikes')
     tags = TagSerializer()
+    share_links = serializers.SerializerMethodField()
     # string describe the read time of an article e.g '1 min read'
     read_time = serializers.ReadOnlyField()
 
@@ -42,7 +44,30 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
         article_rep['read_time'] = str(readtime.of_html(article_rep['body']))
         # return the article's details along with it's read time
         return article_rep
-    
+
+    def get_share_links(self, obj):
+        links = {}
+
+        if isinstance(obj, Articles):
+            title = obj.title
+            description = obj.description
+
+            article_link = reverse('articles:article', kwargs={'slug': obj.slug})
+
+            request = self.context.get('request')
+
+            if request:
+                article_link = parse.quote(request.build_absolute_uri(article_link))
+                title = parse.quote(title)
+                description = parse.quote(description)
+
+                links['facebook'] = "https://www.facebook.com/sharer/sharer.php?u={}".format(article_link)
+                links['google_plus'] = "https://plus.google.com/share?url={}".format(article_link)
+                links['twitter'] = "https://twitter.com/home?status={}".format(article_link)
+                links['email'] = "mailto:?&subject={}&body={}".format(title, description, article_link)
+
+        # return whatever we now have in the :links dictionary
+        return links
 
     def create(self, validated_data):
         """
@@ -73,8 +98,11 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
 
     class Meta:
         model = Articles
-        fields = ('id', 'likes', 'dislikes', 'created_at', 'updated_at', 'author',
-                  'title', 'tags', 'body', 'description', 'average_rating', 'slug', 'read_time')
+
+        fields = ('id', 'likes', 'dislikes', 'created_at', 'updated_at',
+                  'author', 'title', 'tags', 'body', 'description',
+                  'average_rating', 'slug', 'read_time', 'share_links')
+
         extra_kwargs = {
             'url': {
                 'view_name': 'articles:article-detail'
@@ -125,7 +153,8 @@ class FavoriteSerializer(serializers.ModelSerializer):
     """
     Serializers for favorites
     """
-    class Meta():
+
+    class Meta:
         model = Favorite
         fields = ('id', 'user_id', 'article_id')
         read_only_fields = ['id']
@@ -143,10 +172,9 @@ class ReportsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReportArticles
         fields = ('id', 'created_at', 'updated_at', 'author', 'article', 'type_of_report', 'slug',
-                'report')
+                  'report')
         extra_kwargs = {
             'url': {
                 'view_name': 'reports:report-detail'
             }
         }
-
