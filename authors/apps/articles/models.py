@@ -6,7 +6,8 @@ from django.db.models import Avg
 from django.utils.text import slugify
 from django.conf import settings
 
-from authors.apps.authentication.serializers import UserSerializer
+from authors.apps.profiles.models import Profile
+from authors.apps.profiles.serializers import GetProfileSerializer
 from ..authentication.models import User
 from authors.apps.core.models import TimeStampModel
 
@@ -96,16 +97,14 @@ class Articles(TimeStampModel):
         return 0
 
     def get_author(self):
-        user = UserSerializer(self.author)
+        profile = Profile.objects.get(user=self.author)
+        user = GetProfileSerializer(profile)
         author = {
-            "username": user.data['profile']['username'],
-            "bio": user.data['profile']['bio'],
-            "image": user.data['profile']['image']
+            "username" : user.data['username'],
+            "bio" : user.data['bio'],
+            "image" : user.data['image']
         }
         return author
-
-    class Meta:
-        ordering = ('-created_at',)
 
 
 # add ratings model

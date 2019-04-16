@@ -145,13 +145,22 @@ class LoginSerializer(serializers.Serializer):
         }
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.HyperlinkedModelSerializer):
     """Handles serialization and deserialization of User objects."""
 
     # Passwords must be at least 8 characters, but no more than 128
     # characters. These values are the default provided by Django. We could
     # change them, but that would create extra work while introducing no real
     # benefit, so let's just stick with the defaults.
+
+    articles = serializers.HyperlinkedRelatedField(
+        many=True,
+        view_name='articles:article',
+        read_only=True,
+        lookup_field='slug'
+
+    )
+
     password = serializers.CharField(
         max_length=128,
         min_length=8,
@@ -162,9 +171,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        # fields = ('email', 'username', 'password')
-        fields = ('email', 'username', 'password', 'profile',)
-
+        fields = ('email', 'username', 'password', 'profile', 'articles')
         # The `read_only_fields` option is an alternative for explicitly
         # specifying the field with `read_only=True` like we did for password
         # above. The reason we want to use `read_only_fields` here is because

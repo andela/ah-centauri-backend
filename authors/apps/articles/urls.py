@@ -1,7 +1,7 @@
 from django.urls import path
 
 from authors.apps.articles.views import CreateArticlesAPIView, RetrieveUpdateDeleteArticleAPIView, FavoriteView, GetUserFavoritesView
-from authors.apps.articles.views import CreateListRatingsAPIView, RetrieveUpdateDeleteRatingAPIView, LikesView
+from authors.apps.articles.views import CreateListRatingsAPIView, RetrieveUpdateDeleteRatingAPIView, LikesView, CreateListAuthorsAPIView
 from authors.apps.articles.views import CreateListReportsAPIView, RetrieveUpdateDeleteReportAPIView, ListReportsAPIView
 from .models import Articles, LikeDislike
 
@@ -29,5 +29,7 @@ urlpatterns = [
          CreateListReportsAPIView.as_view(), name='reports-list'),
     path('articles/reports/<int:pk>/',
          RetrieveUpdateDeleteReportAPIView.as_view(), name='report-detail'),
+    path('articles/authors/profiles/',
+         CreateListAuthorsAPIView.as_view(), name='author-profile-list'),
 
 ]

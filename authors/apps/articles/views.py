@@ -5,10 +5,14 @@ from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 
+
+from authors.apps.authentication.models import User
+from authors.apps.authentication.serializers import UserSerializer
 from authors.apps.articles.models import Articles, Favorite
 from authors.apps.articles.models import Ratings, ReportArticles
-from authors.apps.articles.permissions import IsOwnerOrReadOnly
+from authors.apps.articles.permissions import IsOwnerOrReadOnly, IsVerified
 from authors.apps.articles.renderers import ArticleJSONRenderer
 from authors.apps.articles.renderers import RatingJSONRenderer, ReportJSONRenderer
 from authors.apps.articles.serializers import ArticleSerializer, RatingsSerializer, ReportsSerializer
@@ -433,7 +437,7 @@ class ListReportsAPIView(APIView):
     """
     serializer_class = ReportsSerializer
     renderer_classes = (ReportJSONRenderer,)
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, IsVerifiedUser)
 
     def get(self, request):
         """
@@ -625,3 +629,18 @@ class RetrieveUpdateDeleteReportAPIView(APIView):
         self.check_object_permissions(request, report)
         report.delete()
         return Response(status=status.HTTP_200_OK)
+
+
+class CreateListAuthorsAPIView(ListAPIView):
+    """
+    Allow any authenticated/verified users to hit this endpoint.
+    List all authors plus their profiles.
+    """
+    permission_classes = (IsAuthenticated, IsVerified,)
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+    
+    def get_queryset(self):
+        articles = Articles.objects.values_list('author_id', flat=True).distinct()
+        users = User.objects.filter(id__in=articles)
+        return users

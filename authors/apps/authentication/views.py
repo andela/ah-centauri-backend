@@ -134,7 +134,7 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         # There is nothing to validate or save here. Instead, we just want the
         # serializer to handle turning our `User` object into something that
         # can be JSONified and sent to the client.
-        serializer = self.serializer_class(request.user)
+        serializer = self.serializer_class(request.user, context={'request': request})
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -245,7 +245,7 @@ class SocialOAuthAPIView(CreateAPIView):
         if user and user.is_active:
             user.is_verified = True
             user.save()
-            serializer = UserSerializer(user)
+            serializer = UserSerializer(user, context={'request': request})
             serializer.instance = user
 
             return Response(serializer.data, status=status.HTTP_200_OK)

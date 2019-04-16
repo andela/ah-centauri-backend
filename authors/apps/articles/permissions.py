@@ -14,3 +14,13 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
         # Write permissions are only allowed to the owner of the snippet.
         return obj.author == request.user
+
+class IsVerified(permissions.BasePermission):
+    """
+    Custom permission to only allow verified users
+    to get a list of authors and their profiles. 
+    """
+
+    def has_permission(self, request, view):
+        # REad authors permissions are only allowed to authenticated and verified users
+        return request.user.is_verified
