@@ -7,6 +7,9 @@ from taggit_serializer.serializers import (TagListSerializerField,
                                            TaggitSerializer)
 from django.urls import reverse
 
+from authors.apps.authentication.serializers import UserSerializer
+
+
 
 class TagSerializer(TagListSerializerField):
     default_error_messages = {
@@ -42,6 +45,7 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
         article_rep['read_time'] = str(readtime.of_html(article_rep['body']))
         # return the article's details along with it's read time
         return article_rep
+
 
     def get_share_links(self, obj):
         links = {}
