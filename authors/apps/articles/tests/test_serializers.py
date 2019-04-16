@@ -27,10 +27,8 @@ class TestArticleSerializer(TestCase):
         }
 
         self.invalid_article = {
-            "article": {
-                "title": "Berenice",
-                "description": "was not written by me"
-            }
+            "title": "Berenice",
+            "description": "was not written by me"
         }
 
         user_data = {
@@ -77,7 +75,7 @@ class TestArticleSerializer(TestCase):
         """
         Test if the serializer validate an article
         """
-        serializer = ArticleSerializer(data=self.invalid_article["article"])
+        serializer = ArticleSerializer(data=self.invalid_article)
         self.assertRaises(
             serializers.ValidationError,
             serializer.is_valid,
@@ -87,8 +85,10 @@ class TestArticleSerializer(TestCase):
         """
         Test if the serializer validated data has a read time
         """
-        serializer = ArticleSerializer(data=self.article["article"])
-        serializer.is_valid()
+        article = Articles.objects.create(**self.article_data)
+
+        serializer = ArticleSerializer(article)
+
         self.assertIn('min read', serializer.data['read_time'])
 
     def test_article_serializer_has_tags(self):
@@ -96,4 +96,3 @@ class TestArticleSerializer(TestCase):
         serializer = ArticleSerializer(data=self.article["article"])
         serializer.is_valid()
         self.assertIn('bottler', serializer.data['tags'])
-
