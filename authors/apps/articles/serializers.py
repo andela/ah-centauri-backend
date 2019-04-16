@@ -112,8 +112,6 @@ class FavoriteSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
-
-
 # add reports serializer
 class ReportsSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)

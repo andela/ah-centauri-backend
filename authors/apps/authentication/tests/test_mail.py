@@ -53,7 +53,7 @@ class EmailTest(TestCase):
         """Tests that the verification link cannot be used twice"""
         self.sign_up_user()
         link = re.search(
-            r'http:\/\/[a-zA-Z0-9]+\/[a-z]+\/[a-z]+-[a-z]+\/[-0-9a-z]+\/[A-z]+\/',
+            r'http:\/\/[a-zA-Z0-9]+\/[a-z]+\/[a-z]+-[a-z]+\/[-0-9a-z]+\/[A-z]+[0-9]+\/',
             mail.outbox[0].body)
         url = link.group()
         self.client.get(url)
