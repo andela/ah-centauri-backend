@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from rest_framework import serializers
 from urllib import parse
 import readtime
@@ -62,8 +60,7 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
                 description = parse.quote(description)
 
                 links['facebook'] = "https://www.facebook.com/sharer/sharer.php?u={}".format(article_link)
-                links['google_plus'] = "https://plus.google.com/share?url={}".format(article_link)
-                links['twitter'] = "https://twitter.com/home?status={}".format(article_link)
+                links['twitter'] = "https://twitter.com/intent/tweet?url={}&text={}".format(article_link, title)
                 links['email'] = "mailto:?&subject={}&body={}".format(title, description, article_link)
 
         # return whatever we now have in the :links dictionary
