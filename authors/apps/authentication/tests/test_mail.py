@@ -41,7 +41,7 @@ class EmailTest(TestCase):
         """Tests if the verification link works"""
         res = self.sign_up_user()
         link = re.search(
-            r'http:\/\/[a-zA-Z0-9]+\/[a-z]+\/[a-z]+-[a-z]+\/[-0-9a-z]+\/[A-z]+[0-9]+\/',
+            r'http:\/\/[a-zA-Z0-9]+\/[a-z]+\/[a-z]+-[a-z]+\/[-0-9a-z]+\/\w+\/',
             mail.outbox[0].body)
         url = link.group()
         res = self.client.get(url)
@@ -53,7 +53,7 @@ class EmailTest(TestCase):
         """Tests that the verification link cannot be used twice"""
         self.sign_up_user()
         link = re.search(
-            r'http:\/\/[a-zA-Z0-9]+\/[a-z]+\/[a-z]+-[a-z]+\/[-0-9a-z]+\/[A-z]+[0-9]+\/',
+            r'http:\/\/[a-zA-Z0-9]+\/[a-z]+\/[a-z]+-[a-z]+\/[-0-9a-z]+\/\w+\/',
             mail.outbox[0].body)
         url = link.group()
         self.client.get(url)
