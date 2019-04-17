@@ -57,11 +57,13 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
         """
         Update and return an existing `Article`, given the validated data.
         """
-        tags = validated_data.pop('tags', instance.tags.all())
+        old_tags = [tag for tag in instance.tags.all()]
+        tags = validated_data.pop('tags', old_tags)
         instance.title = validated_data.get('title', instance.title)
         instance.body = validated_data.get('body', instance.body)
         instance.description = validated_data.get('description', instance.description)
-        instance.tags.set(*tags)
+        unique_tags = list(set(old_tags + tags))
+        instance.tags.set(*unique_tags)
 
         if validated_data.get('title'):
             instance.slug = instance.get_unique_slug()
