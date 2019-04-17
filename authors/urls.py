@@ -22,4 +22,5 @@ urlpatterns = [
     path('api/', include('authors.apps.profiles.urls', namespace='profiles')),
     path('api/', include('authors.apps.articles.urls', namespace='articles')),
     path('api/', include('authors.apps.comments.urls', namespace='comments')),
+    path('api/', include('authors.apps.bookmarks.urls', namespace='bookmarks'))
 ]
