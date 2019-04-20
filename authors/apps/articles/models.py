@@ -36,7 +36,7 @@ class LikeDislikeManager(models.Manager):
 
 class LikeDislike(models.Model):
     """
-    Handles like and dislike of articles
+    Handles like and dislike of articles and comments
     """
     LIKE = 1
     DISLIKE = -1

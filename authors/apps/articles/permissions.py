@@ -20,7 +20,10 @@ class IsVerified(permissions.BasePermission):
     Custom permission to only allow verified users
     to get a list of authors and their profiles. 
     """
-
+    message = ("The email linked to your account has not been verified."
+               " Please verify your account using the email verification link "
+               "if you would like to enjoy all our features.")
+               
     def has_permission(self, request, view):
         # REad authors permissions are only allowed to authenticated and verified users
         return request.user.is_verified
