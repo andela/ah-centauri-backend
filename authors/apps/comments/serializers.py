@@ -11,12 +11,14 @@ class CommentSerializer(serializers.ModelSerializer):
     article = serializers.ReadOnlyField(source='article.slug')
     author = serializers.ReadOnlyField(source='author.username')
     body = serializers.CharField(max_length=250, required=True)
+    likes = serializers.ReadOnlyField(source='likes.likes')
+    dislikes = serializers.ReadOnlyField(source='likes.dislikes')
 
     class Meta:
         model = Comment
         fields = ('id', 'article', 'author',
                   'body', 'created_at', 'updated_at',
-                  'replies', 'parent',)
+                  'replies', 'parent', 'likes', 'dislikes')
         read_only_fields = ('id',)
 
     @staticmethod

@@ -6,3 +6,7 @@ class RatingNotFound(Exception):
 
 class ReportNotFound(Exception):
     pass
+
+class CommentNotFound(Exception):
+    pass
+

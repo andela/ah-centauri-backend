@@ -1,6 +1,7 @@
 from django.db import models
-
-from authors.apps.articles.models import Articles
+from django.contrib.contenttypes.fields import GenericRelation
+                                                
+from authors.apps.articles.models import Articles, LikeDislike
 from authors.apps.authentication.models import User
 from authors.apps.core.models import TimeStampModel
 
@@ -13,6 +14,7 @@ class Comment(TimeStampModel):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     body = models.TextField(max_length=255, null=False, blank=False)
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
+    likes = GenericRelation(LikeDislike, related_query_name='comments')
 
     def __str__(self):
         """
