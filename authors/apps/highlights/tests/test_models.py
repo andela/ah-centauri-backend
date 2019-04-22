@@ -42,7 +42,7 @@ class TestHighlightsModel(TestCase):
             "end_index": 20
         }
 
-    def test_bookmark_model_can_create_bookmark(self):
+    def test_bookmark_model_can_create_highlight(self):
         """
         Test if we can create a highlight object using the highlight model class
         """
@@ -50,7 +50,7 @@ class TestHighlightsModel(TestCase):
         highlight = Highlights.objects.create(**self.highlight_data)
         self.assertEqual(highlight.profile, self.user.profile)
 
-    def test_bookmark_model_string_representation(self):
+    def test_highlight_model_string_representation(self):
         """
         Test if the string of the highlight model returns the expected string
         """
