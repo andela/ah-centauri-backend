@@ -1,27 +1,28 @@
 from django.contrib.contenttypes.models import ContentType
 from rest_framework import generics
 from rest_framework import status
+from rest_framework.generics import ListAPIView
 from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView
-from rest_framework.pagination import LimitOffsetPagination
 
-from authors.apps.authentication.models import User
-from authors.apps.authentication.serializers import UserSerializer
-from authors.apps.articles.models import Articles, Favorite, Ratings
+from authors.apps.articles.exceptions import ArticleNotFound, RatingNotFound, ReportNotFound
+from authors.apps.articles.models import Articles, Favorite
 from authors.apps.articles.models import Ratings, ReportArticles
 from authors.apps.articles.permissions import IsOwnerOrReadOnly, IsVerified
 from authors.apps.articles.renderers import ArticleJSONRenderer
 from authors.apps.articles.renderers import RatingJSONRenderer, ReportJSONRenderer
-from authors.apps.articles.serializers import ArticleSerializer, RatingsSerializer, ReportsSerializer
-from authors.apps.articles.exceptions import ArticleNotFound, RatingNotFound, ReportNotFound
 from authors.apps.articles.response_messages import ERROR_MESSAGES
+from authors.apps.articles.serializers import ArticleSerializer, RatingsSerializer, ReportsSerializer
+from authors.apps.authentication.models import User
 from authors.apps.authentication.permissions import IsVerifiedUser
+from authors.apps.authentication.serializers import UserSerializer
+from authors.apps.core.utils import send_notifications
+from authors.apps.highlights.utils import remove_highlights_for_article
 from .models import LikeDislike
 from .serializers import FavoriteSerializer
-from authors.apps.core.utils import send_notifications
 
 
 class CreateArticlesAPIView(APIView):
@@ -97,6 +98,10 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
         serializer = ArticleSerializer(article, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        # Check if the body has been updated so as to remove highlights for the article
+        # If users made any.
+        if 'body' in request.data:
+            remove_highlights_for_article(article)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request, slug, format=None):
