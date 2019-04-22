@@ -52,7 +52,8 @@ INSTALLED_APPS = [
     'authors.apps.profiles',
     'authors.apps.articles.apps.ArticlesConfig',
     'authors.apps.comments',
-    'authors.apps.bookmarks.apps.BookmarksConfig'
+    'authors.apps.bookmarks.apps.BookmarksConfig',
+    'authors.apps.highlights'
 ]
 
 MIDDLEWARE = [
