@@ -1,29 +1,47 @@
 from django.contrib.contenttypes.models import ContentType
-from rest_framework import generics
-from rest_framework import status
-from rest_framework.generics import RetrieveUpdateAPIView
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework import (generics,
+                            status,
+                            )
+from rest_framework.generics import (RetrieveUpdateAPIView,
+                                     ListAPIView,
+                                     )
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.permissions import (IsAuthenticatedOrReadOnly,
+                                        IsAuthenticated,
+                                        )
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView
-from rest_framework.pagination import LimitOffsetPagination
 
-from authors.apps.comments.models import Comment
-from authors.apps.articles.models import LikeDislike 
-from authors.apps.authentication.models import User
-from authors.apps.authentication.serializers import UserSerializer
-from authors.apps.articles.models import Articles, Favorite, Ratings
-from authors.apps.articles.models import Ratings, ReportArticles
-from authors.apps.articles.permissions import IsOwnerOrReadOnly, IsVerified
-from authors.apps.articles.renderers import ArticleJSONRenderer
-from authors.apps.articles.renderers import RatingJSONRenderer, ReportJSONRenderer
-from authors.apps.articles.serializers import ArticleSerializer, RatingsSerializer, ReportsSerializer
-from authors.apps.articles.exceptions import ArticleNotFound, RatingNotFound, ReportNotFound, CommentNotFound
+from authors.apps.articles.exceptions import (ArticleNotFound,
+                                              RatingNotFound,
+                                              ReportNotFound,
+                                              CommentNotFound,
+                                              )
+from authors.apps.articles.models import (Articles,
+                                          Favorite,
+                                          Ratings,
+                                          ReportArticles,
+                                          )
+from authors.apps.articles.permissions import (IsOwnerOrReadOnly,
+                                               IsVerified,
+                                               )
+from authors.apps.articles.renderers import (ArticleJSONRenderer,
+                                             RatingJSONRenderer,
+                                             ReportJSONRenderer,
+                                             )
 from authors.apps.articles.response_messages import ERROR_MESSAGES
+from authors.apps.articles.serializers import (ArticleSerializer,
+                                               RatingsSerializer,
+                                               ReportsSerializer,
+                                               )
+from authors.apps.authentication.models import User
 from authors.apps.authentication.permissions import IsVerifiedUser
+from authors.apps.authentication.serializers import UserSerializer
+from authors.apps.comments.models import Comment
+from authors.apps.core.reports import reporting
+from authors.apps.core.utils import send_notifications
 from .models import LikeDislike
 from .serializers import FavoriteSerializer
-from authors.apps.core.utils import send_notifications
 
 
 class CreateArticlesAPIView(APIView):
@@ -91,6 +109,11 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
     def get(self, request, slug, format=None):
         article = self.get_object(slug)
         serializer = ArticleSerializer(article, context={'request': request})
+
+        # Reporting the reading starts of an article
+        if request.user.is_authenticated:
+            reporting(user=request.user, article=article)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, slug, format=None):
@@ -310,7 +333,7 @@ class LikesView(APIView):
         --------
         total number of likes and dislikes for that article/comment
         """
-        
+
         model_mapper = {
             Comment: ({'id': self.kwargs.get('id', '')}, CommentNotFound),
             Articles: ({'slug': self.kwargs.get('slug', '')}, ArticleNotFound),
