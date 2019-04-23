@@ -169,4 +169,3 @@ class ReportArticles(TimeStampModel):
 
     class Meta:
         ordering = ('-created_at',)
-
