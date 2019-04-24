@@ -1,50 +1,41 @@
 from django.contrib.contenttypes.models import ContentType
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import (generics,
-                            status,
-                            )
+                            status, )
 from rest_framework.generics import (RetrieveUpdateAPIView,
-                                     ListAPIView,
-                                     )
+                                     ListAPIView, )
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import (IsAuthenticatedOrReadOnly,
-                                        IsAuthenticated,
-                                        )
+                                        IsAuthenticated, )
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from authors.apps.articles.exceptions import (ArticleNotFound,
                                               RatingNotFound,
                                               ReportNotFound,
-                                              CommentNotFound,
-                                              )
+                                              CommentNotFound, )
 from authors.apps.articles.models import (Articles,
                                           Favorite,
                                           Ratings,
-                                          ReportArticles,
-                                          )
+                                          ReportArticles, )
 from authors.apps.articles.permissions import (IsOwnerOrReadOnly,
-                                               IsVerified,
-                                               )
+                                               IsVerified, )
 from authors.apps.articles.renderers import (ArticleJSONRenderer,
                                              RatingJSONRenderer,
-                                             ReportJSONRenderer,
-                                             )
+                                             ReportJSONRenderer, )
 from authors.apps.articles.response_messages import ERROR_MESSAGES
 from authors.apps.articles.serializers import (ArticleSerializer,
                                                RatingsSerializer,
-                                               ReportsSerializer,
-                                               )
+                                               ReportsSerializer, )
 from authors.apps.authentication.models import User
 from authors.apps.authentication.permissions import IsVerifiedUser
 from authors.apps.authentication.serializers import UserSerializer
-from authors.apps.core.utils import send_notifications
-from authors.apps.highlights.utils import remove_highlights_for_article
-from authors.apps.authentication.serializers import UserSerializer
 from authors.apps.comments.models import Comment
-from authors.apps.core.reports import reporting
 from authors.apps.core.utils import send_notifications
 from .models import LikeDislike
 from .serializers import FavoriteSerializer
+from authors.apps.core.reports import reporting
+from authors.apps.highlights.utils import remove_highlights_for_article
 
 
 class CreateArticlesAPIView(APIView):
@@ -57,6 +48,7 @@ class CreateArticlesAPIView(APIView):
     renderer_classes = (ArticleJSONRenderer,)
     pagination_class = LimitOffsetPagination
 
+
     def get(self, request, format=None):
         articles = Articles.objects.all()
         paginator = self.pagination_class()
@@ -64,6 +56,9 @@ class CreateArticlesAPIView(APIView):
         serializer = self.serializer_class(page, many=True, context={'request': request})
         return paginator.get_paginated_response(serializer.data)
 
+    @swagger_auto_schema(request_body=ArticleSerializer,
+                         responses={
+                             201: ArticleSerializer()})
     def post(self, request):
         article = request.data.get('article', {})
         serializer = self.serializer_class(data=article)
@@ -119,6 +114,9 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(request_body=ArticleSerializer,
+                         responses={
+                             200: ArticleSerializer()})
     def put(self, request, slug, format=None):
         article = self.get_object(slug)
         self.check_object_permissions(request, article)
@@ -189,6 +187,9 @@ class CreateListRatingsAPIView(APIView):
             return Response({'data': filtered_ratings, 'RatingsCount': len(serializer.data)}, status=status.HTTP_200_OK)
         return Response({'errors': 'no ratings for this article present'}, status=status.HTTP_404_NOT_FOUND)
 
+    @swagger_auto_schema(request_body=RatingsSerializer,
+                         responses={
+                             201: RatingsSerializer()})
     def post(self, request, slug):
         """
         Method to post a rating of a particular article
@@ -276,6 +277,9 @@ class RetrieveUpdateDeleteRatingAPIView(APIView):
         serializer = RatingsSerializer(rating)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(request_body=RatingsSerializer,
+                         responses={
+                             200: RatingsSerializer()})
     def put(self, request, pk, format=None):
         """
         Method to edit a specific rating
@@ -385,6 +389,9 @@ class FavoriteView(generics.CreateAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = FavoriteSerializer
 
+    @swagger_auto_schema(request_body=FavoriteSerializer,
+                         responses={
+                             201: FavoriteSerializer()})
     def post(self, request, slug):
         """Creates a favorite"""
         data = request.data
@@ -526,6 +533,9 @@ class CreateListReportsAPIView(APIView):
         except Articles.DoesNotExist:
             raise ArticleNotFound
 
+    @swagger_auto_schema(request_body=ReportsSerializer,
+                         responses={
+                             201: ReportsSerializer()})
     def post(self, request, slug):
         """
         Method to post a report of a particular article
@@ -626,6 +636,9 @@ class RetrieveUpdateDeleteReportAPIView(APIView):
         serializer = ReportsSerializer(report)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(request_body=ReportsSerializer,
+                         responses={
+                             200: ReportsSerializer()})
     def put(self, request, pk, format=None):
         """
         Method to edit a specific report

@@ -1,9 +1,11 @@
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from authors.apps.articles.models import Articles, Favorite
+from authors.apps.articles.models import (Articles,
+                                          Favorite, )
 from authors.apps.articles.permissions import IsOwnerOrReadOnly
 from authors.apps.authentication.permissions import IsVerifiedUser
 from authors.apps.comments.models import Comment
@@ -22,6 +24,9 @@ class RetrieveCommentAPIView(APIView):
     serializer_class = CommentSerializer
     renderer_classes = (CommentJSONRenderer,)
 
+    # @swagger_auto_schema(request_body=CommentSerializer,
+    #                      responses={
+    #                          200: CommentSerializer()})
     def get(self, request, slug):
         """
         Handles listing all comments on an article
@@ -40,6 +45,9 @@ class RetrieveCommentAPIView(APIView):
         except Articles.DoesNotExist:
             return Response({"errors": COMMENTS_MSG['ARTICLE_DOES_NOT_EXIST']}, status=status.HTTP_404_NOT_FOUND)
 
+    @swagger_auto_schema(request_body=CommentSerializer,
+                         responses={
+                             200: CommentSerializer()})
     def post(self, request, slug):
         """
         Handles creating a new comment on an article
@@ -99,6 +107,9 @@ class RetrieveUpdateDeleteCommentAPIView(APIView):
         except Comment.DoesNotExist:
             return Response({"errors": COMMENTS_MSG['COMMENT_DOES_NOT_EXIST']}, status=status.HTTP_404_NOT_FOUND)
 
+    @swagger_auto_schema(request_body=CommentSerializer,
+                         responses={
+                             200: CommentSerializer()})
     def patch(self, request, *args, **kwargs):
         """
         Handles updating a comment if author is same as the requester

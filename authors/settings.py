@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'taggit',
     'taggit_serializer',
     'simple_history',
+    'drf_yasg',
 
     'authors.apps.authentication.apps.AuthenticationConfig',
     'authors.apps.core',
@@ -244,6 +245,17 @@ CLOUDINARY = {
     'api_key': config('CLOUDINARY_API_KEY'),
     'api_secret': config('CLOUDINARY_API_SECRET'),
     'secure': True
+}
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'description': 'Token based authentication. ie Bearer token',
+            'in': 'header'
+        }
+    }
 }
 
 TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'

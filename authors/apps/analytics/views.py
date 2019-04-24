@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.permissions import (IsAuthenticated, )
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_yasg.utils import swagger_auto_schema
 
 from authors.apps.analytics.models import ReadsReport
 from authors.apps.analytics.renderers import AnalyticsJSONRenderer
@@ -71,6 +72,9 @@ class AnalyticsUpdateReportAPIView(APIView):
     serializer_class = ReportAPISerializer
     renderer_classes = (AnalyticsJSONRenderer,)
 
+    @swagger_auto_schema(request_body=ReportAPISerializer,
+                         responses={
+                             201: ReportAPISerializer()})
     def patch(self, request, slug):
         """
         Handles updating report if author is same as the requester and article is similar

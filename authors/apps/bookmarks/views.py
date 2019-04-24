@@ -1,3 +1,4 @@
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.permissions import (
     IsAuthenticated)
@@ -19,6 +20,9 @@ class GetBookmarkListAPIView(APIView):
     permission_classes = (IsAuthenticated, IsVerifiedUser,)
     serializer_class = BookmarkSerializer
 
+    @swagger_auto_schema(query_serializer=BookmarkSerializer,
+                         responses={
+                             200: BookmarkSerializer()})
     def get(self, request):
         """
         Return a current user's bookmarked articles.
@@ -87,6 +91,9 @@ class DeleteBookmarkAPIView(APIView):
         except Bookmark.DoesNotExist:
             return None
 
+    @swagger_auto_schema(query_serializer=BookmarkSerializer,
+                         responses={
+                             200: BookmarkSerializer()})
     def delete(self, request, pk, format=None):
         """
         Method to delete a specific booking
@@ -132,6 +139,9 @@ class CreateBookmarkAPIView(APIView):
     permission_classes = (IsAuthenticated, IsVerifiedUser, IsOwner)
     serializer_class = BookmarkSerializer
 
+    @swagger_auto_schema(query_serializer=BookmarkSerializer,
+                         responses={
+                             200: BookmarkSerializer()})
     def post(self, request, slug):
         """
         Create a bookmark for an article
