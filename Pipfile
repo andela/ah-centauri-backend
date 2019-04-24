@@ -4,6 +4,8 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+pep8 = "*"
+autopep8 = "*"
 
 [packages]
 amqp = "==2.4.2"
@@ -54,6 +56,7 @@ whitenoise = "==4.1.2"
 django-taggit = "==1.1.0"
 django-taggit-serializer = "==0.1.7"
 django-filter = "==2.1.0"
+django-simple-history = "*"
 
 [requires]
 python_version = "3.7"

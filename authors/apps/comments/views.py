@@ -1,5 +1,5 @@
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -9,7 +9,7 @@ from authors.apps.authentication.permissions import IsVerifiedUser
 from authors.apps.comments.models import Comment
 from authors.apps.comments.renderers import CommentJSONRenderer
 from authors.apps.comments.response_messages import COMMENTS_MSG
-from authors.apps.comments.serializers import CommentSerializer
+from authors.apps.comments.serializers import CommentSerializer, EditHistorySerializer
 from authors.apps.core.utils import send_notifications
 
 
@@ -139,3 +139,27 @@ class RetrieveUpdateDeleteCommentAPIView(APIView):
             return Response({"message": COMMENTS_MSG['DELETE_SUCCESS']}, status.HTTP_200_OK)
         except Comment.DoesNotExist:
             return Response({"errors": COMMENTS_MSG['COMMENT_DOES_NOT_EXIST']}, status=status.HTTP_404_NOT_FOUND)
+
+
+class RetrieveCommentEditHistory(APIView):
+    permission_classes = (IsAuthenticated, IsVerifiedUser,)
+    serializer_class = EditHistorySerializer
+    renderer_classes = (CommentJSONRenderer,)
+
+    def get(self, request, **kwargs):
+        """
+        Get the entire edit history for a comment
+        :param request:
+        :param kwargs:
+        :return:
+        """
+        try:
+            comment = Comment.objects.get(pk=kwargs['id'], author=request.user)
+        except Comment.DoesNotExist:
+            return Response({"errors": COMMENTS_MSG['COMMENT_DOES_NOT_EXIST']}, status=status.HTTP_404_NOT_FOUND)
+
+        history = comment.history.all()
+
+        serializer = self.serializer_class(history, many=True)
+
+        return Response(serializer.data, status.HTTP_200_OK)
