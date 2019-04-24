@@ -5,6 +5,8 @@ from django.db import models
 from django.db.models.signals import post_save
 
 from authors.apps.core.models import TimeStampModel
+from authors.apps.highlights.models import Highlights
+from authors.apps.highlights.serializers import HighlightSerializer
 
 
 class Profile(TimeStampModel):
@@ -43,6 +45,7 @@ class Profile(TimeStampModel):
     def get_username(self):
         return self.user.username
 
+    @property
     def get_cloudinary_url(self):
         image_url = CloudinaryImage(str(self.image)).build_url(
             width=100, height=150, crop='fill')
@@ -52,6 +55,13 @@ class Profile(TimeStampModel):
     def followers(self):
         profiles = self.to_profile.all()
         return [profile.from_profile.user for profile in profiles]
+
+    @property
+    def highlights(self):
+        highlights = Highlights.objects.filter(profile=self)
+        if len(highlights) < 1:
+            return []
+        return HighlightSerializer(highlights, many=True).data
 
 
 """

@@ -12,6 +12,10 @@ FOLLOW_USER_MSGS = {
     "MY_FOLLOWERS_SUCCESSFUL": "Your followers and those you follow."
 }
 
+PROFILE_MSGS = {
+    "MY_PROFILE": "Your profile details."
+}
+
 
 def get_followers_found_message(username):
     return f"Here are the users {username} follows and is followed by."
