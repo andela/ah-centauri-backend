@@ -147,7 +147,7 @@ class TestHighlightViews(TestCase):
             HIGHLIGHT_MSGS['HIGHLIGHTED_ADDED'],
             response.data['message'])
 
-    def test_user_can_fetch_their_highlights(self):
+    def test_user_can_fetch_their_highlights_for_an_article(self):
         """
         Test user can fetch their highlights for a specific article.
         """
@@ -157,6 +157,23 @@ class TestHighlightViews(TestCase):
         response = self.test_client.get(
             reverse("highlights:create-get-delete-highlights",
                     kwargs={"slug": self.article.slug}),
+            **headers,
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            HIGHLIGHT_MSGS['HIGHLIGHTS_FOUND'],
+            response.data['message'])
+
+    def test_user_can_fetch_all_their_highlights(self):
+        """
+        Test user can fetch all their highlights for a specific article.
+        """
+        token = self.login_a_user()
+        headers = {'HTTP_AUTHORIZATION': 'Bearer ' + token}
+        self.create_highlights()
+        response = self.test_client.get(
+            reverse("highlights:get-all-highlights"),
             **headers,
             content_type='application/json'
         )

@@ -120,3 +120,43 @@ class CreateGetDeleteMyHighlightsAPIView(APIView):
             'message': HIGHLIGHT_MSGS['HIGHLIGHTED_ADDED'],
             'highlight': new_highlight.data
         }, status=status.HTTP_201_CREATED)
+
+
+class GetAllMyHighlightsAPIView(APIView):
+    """
+    Provide method to get all my highlights highlight
+    """
+
+    permission_classes = (IsAuthenticated, IsVerifiedUser,)
+    serializer_class = HighlightSerializer
+
+    def get(self, request):
+        """
+        Get all my highlights for an article
+
+        Params
+        -------
+        request: Object with request data and functions.
+
+        Returns
+        --------
+        Response object:
+        {
+            "message": "message body",
+            "highlights": list of highlights and their details
+        }
+                OR
+        {
+            "errors": "error details body"
+        }
+        """
+        # Retrieve the user from the request if they have been authenticated
+        current_user = request.user
+        # Get all highlights for the current user
+        highlights = Highlights.objects.filter(profile=current_user.profile)
+        highlights = HighlightSerializer(highlights, many=True)
+        return Response({
+            'message': HIGHLIGHT_MSGS['HIGHLIGHTS_FOUND'],
+            'highlights': highlights.data
+        },
+            status=status.HTTP_200_OK)
