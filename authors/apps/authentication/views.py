@@ -3,27 +3,27 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.encoding import force_bytes, force_text
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import (force_bytes,
+                                   force_text, )
+from django.utils.http import (urlsafe_base64_encode,
+                               urlsafe_base64_decode, )
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.generics import RetrieveUpdateAPIView, CreateAPIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.generics import (RetrieveUpdateAPIView,
+                                     CreateAPIView, )
+from rest_framework.permissions import (AllowAny,
+                                        IsAuthenticated, )
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
-from django.utils.encoding import force_bytes, force_text
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.urls import reverse
-
-from social_django.utils import load_backend, load_strategy
-
-from social_core.backends.oauth import BaseOAuth1, BaseOAuth2
+from social_core.backends.oauth import (BaseOAuth1,
+                                        BaseOAuth2, )
 from social_core.exceptions import MissingBackend
-from social_django.utils import load_backend, load_strategy
+from social_django.utils import (load_backend,
+                                 load_strategy, )
 
 from .backends import email_activation_token
-from .models import User, PasswordReset
+from .models import (User,
+                     PasswordReset, )
 from .renderers import UserJSONRenderer
 from .response_messages import PASSWORD_RESET_MSGS
 from .serializers import (
@@ -34,11 +34,10 @@ from .serializers import (
     PasswordResetSerializer,
     PasswordResetRequestSerializer,
     SetNewPasswordSerializer,
-    NotificationSerializer, UserNotificationSerializer)
-from django.conf import settings
-import jwt
-from .utils import PasswordResetTokenHandler
-from .utils import validate_image
+    NotificationSerializer,
+    UserNotificationSerializer, )
+from .utils import (PasswordResetTokenHandler,
+                    validate_image, )
 
 
 class RegistrationAPIView(APIView):
@@ -47,6 +46,9 @@ class RegistrationAPIView(APIView):
     renderer_classes = (UserJSONRenderer,)
     serializer_class = RegistrationSerializer
 
+    @swagger_auto_schema(request_body=RegistrationSerializer,
+                         responses={
+                             201: UserSerializer()})
     def post(self, request):
         user = request.data.get('user', {})
 
@@ -108,6 +110,9 @@ class LoginAPIView(APIView):
     renderer_classes = (UserJSONRenderer,)
     serializer_class = LoginSerializer
 
+    @swagger_auto_schema(request_body=LoginSerializer,
+                         responses={
+                             200: UserSerializer()})
     def post(self, request):
         user = request.data.get('user', {})
 
@@ -138,6 +143,9 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(query_serializer=RegistrationSerializer,
+                         responses={
+                             200: UserSerializer()})
     def update(self, request, *args, **kwargs):
         # serializer_data = request.data.get('user', {})
 
@@ -190,6 +198,9 @@ class SocialOAuthAPIView(CreateAPIView):
     renderer_classes = (UserJSONRenderer,)
     serializer_class = SocialOAuthSerializer
 
+    @swagger_auto_schema(query_serializer=SocialOAuthSerializer,
+                         responses={
+                             200: UserSerializer()})
     def create(self, request, *args, **kwargs):
         """
         Overide 'create' instead of 'perform-create' to access request
@@ -261,6 +272,9 @@ class PasswordResetAPIView(APIView):
 
     permission_classes = (AllowAny,)
 
+    @swagger_auto_schema(request_body=PasswordResetRequestSerializer,
+                         responses={
+                             200: PasswordResetRequestSerializer()})
     def post(self, request):
         """ 
         Create a password reset link and send it to the user who requested it.
@@ -336,6 +350,9 @@ class SetPasswordAPIView(APIView):
     """
     permission_classes = (AllowAny,)
 
+    @swagger_auto_schema(request_body=SetNewPasswordSerializer,
+                         responses={
+                             200: SetNewPasswordSerializer()})
     def patch(self, request, reset_token):
         """
         Create a password reset link and send it to the user who requested it.
@@ -449,6 +466,9 @@ class NotificationsView(APIView):
 
         return Response(notifications.data)
 
+    @swagger_auto_schema(query_serializer=NotificationSerializer,
+                         responses={
+                             200: NotificationSerializer()})
     def patch(self, request):
         request.user.notifications.update(is_read=True)
 
@@ -473,6 +493,9 @@ class NotificationSettingsView(APIView):
 
         return Response(notification_settings)
 
+    @swagger_auto_schema(query_serializer=UserNotificationSerializer,
+                         responses={
+                             200: UserNotificationSerializer()})
     def patch(self, request):
         notification_settings = request.user.notification_settings
         serializer = UserNotificationSerializer(notification_settings, data=request.data)

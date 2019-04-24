@@ -3,6 +3,7 @@ from rest_framework.permissions import (
     IsAuthenticated)
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_yasg.utils import swagger_auto_schema
 
 from authors.apps.articles.models import Articles
 from authors.apps.authentication.permissions import IsVerifiedUser
@@ -68,6 +69,9 @@ class CreateGetDeleteMyHighlightsAPIView(APIView):
         },
             status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(request_body=HighlightSerializer,
+                         responses={
+                             201: HighlightSerializer()})
     def post(self, request, slug):
         """
         Create a highlight for an article
@@ -172,6 +176,9 @@ class UpdateMyHighlightsAPIView(APIView):
     permission_classes = (IsAuthenticated, IsVerifiedUser, IsOwner)
     serializer_class = HighlightSerializer
 
+    @swagger_auto_schema(request_body=HighlightSerializer,
+                         responses={
+                             201: HighlightSerializer()})
     def patch(self, request, pk):
         """
         Edits a highlight's comment for an article highlight

@@ -29,6 +29,9 @@ class SearchArticleListAPIView(generics.ListAPIView):
     filterset_class = ArticleFilter
     search_fields = ('author__username', 'title', 'created_at',)
 
+    # @swagger_auto_schema(query_serializer=ArticleSerializer,
+    #                      responses={
+    #                          200: ArticleSerializer()})
     def get_queryset(self):
         # Getting specific properties from the request body
         favorited = self.request.query_params.get('favorited', '')  # returns username
