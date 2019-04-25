@@ -38,7 +38,7 @@ class Highlights(TimeStampModel):
         """
         username = self.profile.user.username
         article_title = self.article.title
-        hl_id = self.id
+        highlight_id = self.id
         return """
             Highlight - 
             id:{} username: {}, 
@@ -46,7 +46,7 @@ class Highlights(TimeStampModel):
             start_index: {}, 
             end_index: {}
         """.format(
-            hl_id,
+            highlight_id,
             username,
             article_title,
             self.start_index,

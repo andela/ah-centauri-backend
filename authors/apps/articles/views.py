@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticate
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from authors.apps.articles.exceptions import ArticleNotFound, RatingNotFound, ReportNotFound
+from authors.apps.articles.exceptions import ArticleNotFound, RatingNotFound, ReportNotFound, CommentNotFound
 from authors.apps.articles.models import Articles, Favorite
 from authors.apps.articles.models import Ratings, ReportArticles
 from authors.apps.articles.permissions import IsOwnerOrReadOnly, IsVerified
@@ -19,6 +19,7 @@ from authors.apps.articles.serializers import ArticleSerializer, RatingsSerializ
 from authors.apps.authentication.models import User
 from authors.apps.authentication.permissions import IsVerifiedUser
 from authors.apps.authentication.serializers import UserSerializer
+from authors.apps.comments.models import Comment
 from authors.apps.core.utils import send_notifications
 from authors.apps.highlights.utils import remove_highlights_for_article
 from .models import LikeDislike
@@ -198,12 +199,6 @@ class CreateListRatingsAPIView(APIView):
         except:
             rating = serializer.save(author=request.user, article=article)
 
-            # notify author of new interaction
-            send_notifications(request,
-                               notification_type="article_rated",
-                               instance=rating,
-                               recipients=[rating.article.author])
-
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -300,7 +295,7 @@ class RetrieveUpdateDeleteRatingAPIView(APIView):
 
 class LikesView(APIView):
     """
-    View for liking and disliking Articles and later on Comments
+    View for liking and disliking Articles and Comments
     """
     model = None  # Data Model - Articles or Comments
     vote_type = None  # Vote type Like/Dislike
@@ -308,18 +303,27 @@ class LikesView(APIView):
 
     def post(self, request, *args, **kwargs):
         """
-        Method to like or dislike an article
+        Method to like or dislike an article or a comment
 
         Params
         -------
         request: Object with request data and functions.
-        kwargs: reference to the article to liked/disliked
+        kwargs: reference to the article/comment to be liked/disliked
 
         Returns
         --------
-        total number of likes and dislikes for that article
+        total number of likes and dislikes for that article/comment
         """
-        obj = self.model.objects.get(slug=self.kwargs['slug'])
+
+        model_mapper = {
+            Comment: ({'id': self.kwargs.get('id', '')}, CommentNotFound),
+            Articles: ({'slug': self.kwargs.get('slug', '')}, ArticleNotFound),
+        }
+        try:
+            obj = self.model.objects.get(**model_mapper[self.model][0])
+        except self.model.DoesNotExist:
+            raise model_mapper[self.model][1]
+
         # GenericForeignKey does not support get_or_create
         content_type = ContentType.objects.get_for_model(obj)
         try:
@@ -328,7 +332,7 @@ class LikesView(APIView):
             )
             # Checks if the object has not been liked or disliked before
             # then likes/dislikes if it hasn't if it has
-            # then it the like/dislike is deleted
+            # then the like/dislike is deleted
             if like_dislike.vote is not self.vote_type:
                 like_dislike.vote = self.vote_type
                 like_dislike.save(update_fields=['vote'])
@@ -339,7 +343,8 @@ class LikesView(APIView):
             send_notifications(request,
                                notification_type="resource_liked",
                                instance=like_dislike,
-                               recipients=[like_dislike.article.author])
+                               recipients=[obj.author])
+
         return Response(
             {
                 "like_count": obj.likes.likes(),

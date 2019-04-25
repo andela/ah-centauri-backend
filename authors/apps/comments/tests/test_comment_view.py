@@ -169,7 +169,6 @@ class PrivateCommentApiTest(TestCase):
         url = specific_articles_url(slug=comment.data['article'])
         self.payload.get('comment')['parent'] = comment.data['id']
         res = self.client.post(url, self.payload, **self.headers, format='json')
-
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
     def test_reply_to_comment_invalid_article(self):

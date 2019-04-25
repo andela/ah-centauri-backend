@@ -69,7 +69,7 @@ class TestHighlightsModel(TestCase):
         highlight = Highlights.objects.create(**self.highlight_data)
         username = highlight.profile.user.username
         article_title = highlight.article.title
-        hl_id = highlight.id
+        highlight_id = highlight.id
         rep = """
             Highlight - 
             id:{} username: {}, 
@@ -77,7 +77,7 @@ class TestHighlightsModel(TestCase):
             start_index: {}, 
             end_index: {}
         """.format(
-            hl_id,
+            highlight_id,
             username,
             article_title,
             highlight.start_index,

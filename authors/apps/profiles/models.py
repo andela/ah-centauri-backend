@@ -59,8 +59,6 @@ class Profile(TimeStampModel):
     @property
     def highlights(self):
         highlights = Highlights.objects.filter(profile=self)
-        if len(highlights) < 1:
-            return []
         return HighlightSerializer(highlights, many=True).data
 
 

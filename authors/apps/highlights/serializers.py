@@ -27,7 +27,6 @@ class HighlightSerializer(serializers.ModelSerializer):
         Check that start is less than finishing index and length
         of article is within index range.
         """
-        article = self.initial_data['article']
         if data['start_index'] > data['end_index']:
             raise serializers.ValidationError(HL_VALIDATION_MSGS["END_LESS_THAN_START"])
         article_length = len(self.initial_data['article'].body) - 1
