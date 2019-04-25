@@ -15,5 +15,6 @@ HIGHLIGHT_MSGS = {
     "HIGHLIGHTED_ADDED": "Highlight added.",
     "NO_HIGHLIGHTS": "You have no highlights on this article.",
     "HIGHLIGHT_NOT_SAVED": "Could not add the highlight.",
-    "HIGHLIGHTS_FOUND": "Here are your highlights."
+    "HIGHLIGHTS_FOUND": "Here are your highlights.",
+    "HIGHLIGHTS_NOT_FOUND": "Here are your highlights."
 }

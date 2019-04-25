@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from authors.apps.articles.models import Articles
 from authors.apps.authentication.permissions import IsVerifiedUser
 from .models import Highlights
+from .permissions import IsOwner
 from .response_messages import HIGHLIGHT_MSGS
 from .serializers import HighlightSerializer
 
@@ -42,6 +43,7 @@ class CreateGetDeleteMyHighlightsAPIView(APIView):
         # Retrieve the user from the request if they have been authenticated
         current_user = request.user
         highlight_data = request.data.get("highlight_data", {})
+
         # Check if the article exists
         try:
             article = Articles.objects.get(slug=slug)
@@ -160,3 +162,61 @@ class GetAllMyHighlightsAPIView(APIView):
             'highlights': highlights.data
         },
             status=status.HTTP_200_OK)
+
+
+class UpdateMyHighlightsAPIView(APIView):
+    """
+    Provide methods for creating a highlight
+    """
+
+    permission_classes = (IsAuthenticated, IsVerifiedUser, IsOwner)
+    serializer_class = HighlightSerializer
+
+    def patch(self, request, pk):
+        """
+        Edits a highlight's comment for an article highlight
+
+        Params
+        -------
+        request: Object with request data and functions.
+
+        Returns
+        --------
+        Response object:
+        {
+            "message": "message body",
+            "highlight": dictionary of edited highlight details created by current user
+        }
+                OR
+        {
+            "errors": "error details body"
+        }
+        """
+        # Retrieve the user from the request if they have been authenticated
+        current_user = request.user
+        highlight_data = request.data.get("highlight_data", {})
+        try:
+            highlight = Highlights.objects.get(id=pk)
+            self.check_object_permissions(request, obj=highlight)
+            update_highlight = {
+                "article": highlight.article,
+                "profile": current_user.profile,
+                "start_index": highlight.start_index,
+                "end_index": highlight.end_index,
+                "comment": highlight_data['comment']
+
+            }
+            update_highlight = self.serializer_class(highlight, data=update_highlight, partial=True)
+            update_highlight.is_valid(raise_exception=True)
+            update_highlight.save()
+            return Response({
+                'message': HIGHLIGHT_MSGS['HIGHLIGHT_UPDATED'],
+                'highlight': update_highlight.data
+            }, status=status.HTTP_200_OK)
+        except Highlights.DoesNotExist:
+            return Response(
+                {
+                    "errors": HIGHLIGHT_MSGS['HIGHLIGHTS_NOT_FOUND']
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )

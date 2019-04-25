@@ -122,6 +122,8 @@ class TestHighlightViews(TestCase):
             data=json.dumps(highlight_data2)
         )
 
+        return response
+
     def test_user_can_add_a_highlight(self):
         """
         Test a user can highlight an article's text and make a comment on it
@@ -247,6 +249,56 @@ class TestHighlightViews(TestCase):
 
         self.assertEqual(
             HIGHLIGHT_MSGS['ARTICLE_NOT_FOUND'],
+            response.data['errors'])
+
+    def test_user_update_a_highlight_comment(self):
+        """
+        Test a user can update a highlight's comment
+        """
+        token = self.login_a_user()
+        headers = {'HTTP_AUTHORIZATION': 'Bearer ' + token}
+        highlight_data = {
+            "highlight_data": {
+                "comment": "updated comment"
+            }
+        }
+        res = self.create_highlights()
+        highlight_id = res.data['highlight']['id']
+        response = self.test_client.patch(
+            reverse("highlights:update-highlights",
+                    kwargs={"pk": highlight_id}),
+            **headers,
+            content_type='application/json',
+            data=json.dumps(highlight_data)
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            HIGHLIGHT_MSGS['HIGHLIGHT_UPDATED'],
+            response.data['message'])
+
+    def test_user_cannot_update_a_highlight_comment_if_highlight_is_nonexistent(self):
+        """
+        Test a user cannot update a non-existent highlight's comment
+        """
+        token = self.login_a_user()
+        headers = {'HTTP_AUTHORIZATION': 'Bearer ' + token}
+        highlight_data = {
+            "highlight_data": {
+                "comment": "updated comment"
+            }
+        }
+        res = self.create_highlights()
+        highlight_id = res.data['highlight']['id']
+        response = self.test_client.patch(
+            reverse("highlights:update-highlights",
+                    kwargs={"pk": 10000}),
+            **headers,
+            content_type='application/json',
+            data=json.dumps(highlight_data)
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            HIGHLIGHT_MSGS['HIGHLIGHTS_NOT_FOUND'],
             response.data['errors'])
 
     def test_user_cannot_fetch_a_highlight_if_article_doesnot_exist(self):

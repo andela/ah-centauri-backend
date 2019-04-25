@@ -100,7 +100,6 @@ class TestProfileViews(TestCase):
         response = self.test_client.get(
             reverse('profiles:my_profile'), **headers,
             content_type='application/json')
-        print(response.data)
         self.assertEqual(response.status_code, 200)
 
     def test_update_existing_profie(self):
