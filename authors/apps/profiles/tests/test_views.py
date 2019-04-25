@@ -93,6 +93,15 @@ class TestProfileViews(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    def test_retrieve_current_user_profile(self):
+        """ test for the retrieve my profile endpoint """
+        token = self.login_a_user()
+        headers = {'HTTP_AUTHORIZATION': 'Bearer ' + token}
+        response = self.test_client.get(
+            reverse('profiles:my_profile'), **headers,
+            content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+
     def test_update_existing_profie(self):
         """ test for updating exisiting user profile"""
         token = self.login_a_user()

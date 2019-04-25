@@ -367,9 +367,9 @@ class LikesView(APIView):
         except LikeDislike.DoesNotExist:
             like_dislike = obj.likes.create(user=request.user, vote=self.vote_type)
             send_notifications(request,
-                                notification_type="resource_liked",
-                                instance=like_dislike,
-                                recipients=[obj.author])
+                               notification_type="resource_liked",
+                               instance=like_dislike,
+                               recipients=[obj.author])
 
         return Response(
             {

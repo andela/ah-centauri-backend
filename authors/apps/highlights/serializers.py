@@ -15,10 +15,11 @@ class HighlightSerializer(serializers.ModelSerializer):
     end_index = serializers.IntegerField(required=True, min_value=1)
     comment = serializers.CharField(required=False)
     article = serializers.SerializerMethodField()
+    highlighted_by = serializers.SerializerMethodField()
 
     class Meta:
         model = Highlights
-        fields = ('id', 'start_index', 'article', 'end_index', 'comment', 'text')
+        fields = ('id', 'start_index', 'article', 'end_index', 'comment', 'text', 'highlighted_by')
         read_only_fields = ('created_at',)
 
     def validate(self, data):
@@ -26,7 +27,6 @@ class HighlightSerializer(serializers.ModelSerializer):
         Check that start is less than finishing index and length
         of article is within index range.
         """
-        article = self.initial_data['article']
         if data['start_index'] > data['end_index']:
             raise serializers.ValidationError(HL_VALIDATION_MSGS["END_LESS_THAN_START"])
         article_length = len(self.initial_data['article'].body) - 1
@@ -57,7 +57,7 @@ class HighlightSerializer(serializers.ModelSerializer):
 
         Params
         -------
-        request: Object with request data and functions.
+        obj: Object with highlight data and functions.
 
         Returns
         --------
@@ -76,3 +76,17 @@ class HighlightSerializer(serializers.ModelSerializer):
             "author": obj.article.author.username
         }
         return article
+
+    def get_highlighted_by(self, obj):
+        """
+        Return username for user who highlighted.
+
+        Params
+        -------
+        obj: Object with highlight data and functions.
+
+        Returns
+        --------
+        String for the user who highlighted the article
+        """
+        return obj.profile.get_username

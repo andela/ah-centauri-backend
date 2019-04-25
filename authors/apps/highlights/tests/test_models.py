@@ -2,7 +2,8 @@ from django.test import TestCase
 
 from authors.apps.articles.models import Articles
 from authors.apps.authentication.models import User
-from ..models import Highlights
+from authors.apps.highlights.models import Highlights
+from authors.apps.highlights.serializers import HighlightSerializer
 
 
 class TestHighlightsModel(TestCase):
@@ -42,13 +43,24 @@ class TestHighlightsModel(TestCase):
             "end_index": 20
         }
 
-    def test_bookmark_model_can_create_highlight(self):
+    def test_highlight_model_can_create_highlight(self):
         """
         Test if we can create a highlight object using the highlight model class
         """
 
         highlight = Highlights.objects.create(**self.highlight_data)
         self.assertEqual(highlight.profile, self.user.profile)
+
+    def test_if_profile_can_access_highlights(self):
+        """
+        Test if the profile returns the highlights a user has made
+        :return:
+        """
+        highlight = Highlights.objects.create(**self.highlight_data)
+        highlights = Highlights.objects.filter(profile=self.user.profile)
+        self.assertEqual(highlight.profile, self.user.profile)
+        serializer = HighlightSerializer(highlights, many=True)
+        self.assertEqual(serializer.data, self.user.profile.highlights)
 
     def test_highlight_model_string_representation(self):
         """
@@ -57,7 +69,7 @@ class TestHighlightsModel(TestCase):
         highlight = Highlights.objects.create(**self.highlight_data)
         username = highlight.profile.user.username
         article_title = highlight.article.title
-        hl_id = highlight.id
+        highlight_id = highlight.id
         rep = """
             Highlight - 
             id:{} username: {}, 
@@ -65,7 +77,7 @@ class TestHighlightsModel(TestCase):
             start_index: {}, 
             end_index: {}
         """.format(
-            hl_id,
+            highlight_id,
             username,
             article_title,
             highlight.start_index,

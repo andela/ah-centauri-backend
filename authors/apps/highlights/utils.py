@@ -18,3 +18,4 @@ def remove_highlights_for_article(article):
     for highlight in article_highlights:
         highlight.delete()
     return True
+

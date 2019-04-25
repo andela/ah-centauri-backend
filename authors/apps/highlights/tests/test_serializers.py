@@ -51,6 +51,13 @@ class TestHighlightsSerializer(TestCase):
             "end_index": 1000
         }
 
+        self.invalid_highlight_data2 = {
+            "profile": self.user.profile,
+            "article": self.article,
+            "start_index": 10,
+            "end_index": 1
+        }
+
     def test_highlight_serializer_can_validate_highlight(self):
         """
         Test if we can validate a highlight object using the highlight serializer class
@@ -66,6 +73,17 @@ class TestHighlightsSerializer(TestCase):
         """
 
         highlight = HighlightSerializer(data=self.invalid_highlight_data)
+        self.assertRaises(
+            serializers.ValidationError,
+            highlight.is_valid,
+            raise_exception=True)
+
+    def test_highlight_serializer_with_invalid_start_end_index(self):
+        """
+        Test if we can invalidate a highlight which has a start index that is less
+        than the end index.
+        """
+        highlight = HighlightSerializer(data=self.invalid_highlight_data2)
         self.assertRaises(
             serializers.ValidationError,
             highlight.is_valid,
