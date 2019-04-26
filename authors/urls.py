@@ -23,5 +23,6 @@ urlpatterns = [
     path('api/', include('authors.apps.articles.urls', namespace='articles')),
     path('api/', include('authors.apps.comments.urls', namespace='comments')),
     path('api/', include('authors.apps.bookmarks.urls', namespace='bookmarks')),
+    path('api/', include('authors.apps.highlights.urls', namespace='highlights')),
     path('api/', include('authors.apps.analytics.urls', namespace='analytics')),
 ]

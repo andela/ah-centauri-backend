@@ -37,6 +37,9 @@ from authors.apps.articles.serializers import (ArticleSerializer,
 from authors.apps.authentication.models import User
 from authors.apps.authentication.permissions import IsVerifiedUser
 from authors.apps.authentication.serializers import UserSerializer
+from authors.apps.core.utils import send_notifications
+from authors.apps.highlights.utils import remove_highlights_for_article
+from authors.apps.authentication.serializers import UserSerializer
 from authors.apps.comments.models import Comment
 from authors.apps.core.reports import reporting
 from authors.apps.core.utils import send_notifications
@@ -122,6 +125,10 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
         serializer = ArticleSerializer(article, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        # Check if the body has been updated so as to remove highlights for the article
+        # If users made any.
+        if 'body' in request.data:
+            remove_highlights_for_article(article)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request, slug, format=None):
@@ -360,9 +367,9 @@ class LikesView(APIView):
         except LikeDislike.DoesNotExist:
             like_dislike = obj.likes.create(user=request.user, vote=self.vote_type)
             send_notifications(request,
-                                notification_type="resource_liked",
-                                instance=like_dislike,
-                                recipients=[obj.author])
+                               notification_type="resource_liked",
+                               instance=like_dislike,
+                               recipients=[obj.author])
 
         return Response(
             {

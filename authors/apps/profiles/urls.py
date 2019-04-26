@@ -2,12 +2,16 @@ from django.urls import path
 
 from .views import (
     ProfileRetrieveAPIView, ProfilesListAPIView,
-    ProfileFollowUserAPIView, ProfileMyFollowingAPIView
+    ProfileFollowUserAPIView, ProfileMyFollowingAPIView,
+    GetMyProfileAPIView
 )
 
 app_name = 'profiles'
 
 urlpatterns = [
+    path('profiles/me/',
+         GetMyProfileAPIView.as_view(),
+         name='my_profile'),
     path('profiles/follow/',
          ProfileMyFollowingAPIView.as_view(),
          name='my_following'),

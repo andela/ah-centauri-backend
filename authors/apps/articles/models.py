@@ -8,7 +8,6 @@ from taggit.managers import TaggableManager
 
 from authors.apps.core.models import TimeStampModel
 from authors.apps.profiles.models import Profile
-from authors.apps.profiles.serializers import GetProfileSerializer
 from ..authentication.models import User
 
 
@@ -99,11 +98,10 @@ class Articles(TimeStampModel):
 
     def get_author(self):
         profile = Profile.objects.get(user=self.author)
-        user = GetProfileSerializer(profile)
         author = {
-            "username" : user.data['username'],
-            "bio" : user.data['bio'],
-            "image" : user.data['image']
+            "username": profile.get_username,
+            "bio": profile.bio,
+            "image": profile.get_cloudinary_url
         }
         return author
 
@@ -113,8 +111,7 @@ class Articles(TimeStampModel):
         favoriters = []
         for favoriter in queryset:
             profile = Profile.objects.get(user=favoriter.user_id)
-            user = GetProfileSerializer(profile).data['username']
-            favoriters.append(user)
+            favoriters.append(profile.get_username)
         return favoriters
 
     class Meta:

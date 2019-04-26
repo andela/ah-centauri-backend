@@ -12,8 +12,8 @@ from .exceptions import ProfileDoesNotExist
 from .models import CustomFollows
 from .models import Profile
 from .renderers import ProfileJSONRenderer
-from .response_messages import FOLLOW_USER_MSGS, get_followers_found_message
-from .serializers import GetProfileSerializer
+from .response_messages import PROFILE_MSGS, FOLLOW_USER_MSGS, get_followers_found_message
+from .serializers import GetProfileSerializer, GetCurrentUserProfileSerializer
 from .utils import get_user_following_data
 
 
@@ -37,6 +37,41 @@ class ProfileRetrieveAPIView(RetrieveAPIView):
         serializer = self.serializer_class(profile)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class GetMyProfileAPIView(APIView):
+    """
+    Class endpoint for retrieving my user profile
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = GetCurrentUserProfileSerializer
+
+    def get(self, request):
+        """
+        Get current user profile
+
+        Params
+        -------
+        request: Object with request data and functions.
+
+        Returns
+        --------
+        Response object:
+        {
+            "message": "message body",
+            "profile": Current user profile details
+        }
+                OR
+        {
+            "errors": "error details body"
+        }
+        """
+        current_user = request.user
+        user_profile = self.serializer_class(current_user.profile)
+        return Response({
+            "message": PROFILE_MSGS['MY_PROFILE'],
+            "profile": user_profile.data
+        }, status=status.HTTP_200_OK)
 
 
 class ProfilesListAPIView(ListAPIView):
