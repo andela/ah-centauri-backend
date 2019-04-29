@@ -11,7 +11,7 @@ class ReadsReport(TimeStampModel):
     Display no of users who clicked on an article.
     """
     article = models.ForeignKey(Articles, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     # Shows if user has read the entire article.
     full_read = models.BooleanField(default=False)
 
@@ -20,8 +20,14 @@ class ReadsReport(TimeStampModel):
         ReadReport String representation
         :return:
         """
-        return f'{self.article.slug} viewed by {self.user.username}: ' \
-            f'read entire article == {self.full_read}'
+        if self.user:
+            return f'{self.article.slug} viewed by {self.user.username}: ' \
+                f'read entire article == {self.full_read}'
+        else:
+            return f'{self.article.slug} viewed by Anonymous: ' \
+                f'read entire article == {self.full_read}'
+
 
     class Meta:
         ordering = ['created_at']
+        unique_together = (('user', 'article'),)

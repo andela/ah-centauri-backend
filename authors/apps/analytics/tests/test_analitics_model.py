@@ -11,7 +11,7 @@ class TestAnalyticsModel(BaseAnalyticsSetup):
         """
         Test if we can create a report using the report model class
         """
-        report = ReadsReport.objects.create(user=self.author, article=self.article)
+        report = ReadsReport.objects.create(user=self.author, article=self.article, num_views=0)
 
         self.assertEqual(report.article, self.article)
 
@@ -19,9 +19,20 @@ class TestAnalyticsModel(BaseAnalyticsSetup):
         """
         Test if the string of the report model returns the expected string
         """
-        report = ReadsReport.objects.create(user=self.author, article=self.article)
+        report = ReadsReport.objects.create(user=self.author, article=self.article, num_views=0)
 
         rep = f'{report.article.slug} viewed by {report.user.username}: ' \
+            f'read entire article == {report.full_read}'
+
+        self.assertIn(str(rep), str(report))
+
+    def test_report_model_string_representation_anonymous_user(self):
+        """
+        Test if the string of the report model returns the expected string
+        """
+        report = ReadsReport.objects.create(article=self.article, num_views=0)
+
+        rep = f'{report.article.slug} viewed by Anonymous: ' \
             f'read entire article == {report.full_read}'
 
         self.assertIn(str(rep), str(report))

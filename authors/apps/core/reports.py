@@ -8,9 +8,5 @@ def reporting(*args, **kwargs):
     :param kwargs:
     :return: [report]
     """
-    try:
-        report = ReadsReport.objects.get(user=kwargs.get('user'), article=kwargs.get('article'))
-    except ReadsReport.DoesNotExist:
-        report = ReadsReport.objects.create(user=kwargs.get('user'), article=kwargs.get('article'))
-
+    report = ReadsReport.objects.create(**kwargs)
     return report

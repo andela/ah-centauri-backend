@@ -35,6 +35,7 @@ from authors.apps.articles.serializers import (ArticleSerializer,
                                                ReportsSerializer,
                                                )
 from authors.apps.authentication.models import User
+from authors.apps.analytics.models import ReadsReport
 from authors.apps.authentication.permissions import IsVerifiedUser
 from authors.apps.authentication.serializers import UserSerializer
 from authors.apps.core.utils import send_notifications
@@ -113,9 +114,14 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
         article = self.get_object(slug)
         serializer = ArticleSerializer(article, context={'request': request})
 
-        # Reporting the reading starts of an article
+        # Reporting the reading stats of an article
         if request.user.is_authenticated:
-            reporting(user=request.user, article=article)
+            try:
+                ReadsReport.objects.get(user=request.user, article=article)
+            except ReadsReport.DoesNotExist:
+                reporting(user=request.user, article=article)
+        else:
+            reporting(article=article)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
