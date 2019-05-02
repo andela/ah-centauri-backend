@@ -21,6 +21,8 @@ class Highlights(TimeStampModel):
     end_index = models.IntegerField(null=False)
     # User comment to go along with the highlight
     comment = models.TextField(max_length=500, default="")
+    # User highlight privacy defaults to True
+    private = models.BooleanField(null=False, default=True)
 
     class Meta:
         """
@@ -39,15 +41,19 @@ class Highlights(TimeStampModel):
         username = self.profile.user.username
         article_title = self.article.title
         highlight_id = self.id
+        private = self.private
         return """
-            Highlight - 
-            id:{} username: {}, 
+            Highlight Instance
+            -------------------
+            id:{} username: {},
+            private: {}, 
             title: {}, 
             start_index: {}, 
             end_index: {}
         """.format(
             highlight_id,
             username,
+            private,
             article_title,
             self.start_index,
             self.end_index,

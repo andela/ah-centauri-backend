@@ -4,7 +4,9 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from rest_framework import status
 
+from authors.apps.articles.models import Articles
 from authors.apps.authentication.models import User
+from authors.apps.highlights.models import Highlights
 from authors.apps.profiles.models import CustomFollows
 from authors.apps.profiles.response_messages import (
     FOLLOW_USER_MSGS,
@@ -97,6 +99,19 @@ class TestProfileViews(TestCase):
         """ test for the retrieve my profile endpoint """
         token = self.login_a_user()
         headers = {'HTTP_AUTHORIZATION': 'Bearer ' + token}
+        new_article = Articles.objects.create(
+            title="Time in a tree.",
+            description="Raleigh Ritchie",
+            body="Stuck on repeat",
+            author=self.user
+        )
+        new_article.save()
+        Highlights.objects.create(
+            start_index=2,
+            end_index=8,
+            profile=self.user.profile,
+            article=new_article
+        ).save()
         response = self.test_client.get(
             reverse('profiles:my_profile'), **headers,
             content_type='application/json')
@@ -146,7 +161,6 @@ class TestProfileViews(TestCase):
         response = self.test_client.put(
             "/api/user/", **headers, content_type='application/json',
             data=json.dumps(self.errornious_updated_data))
-
         self.assertEqual(response.json()['errors']['profile']['website'], [
             "Enter a valid URL."])
 

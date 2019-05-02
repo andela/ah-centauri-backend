@@ -60,7 +60,6 @@ class TestHighlightsModel(TestCase):
         highlights = Highlights.objects.filter(profile=self.user.profile)
         self.assertEqual(highlight.profile, self.user.profile)
         serializer = HighlightSerializer(highlights, many=True)
-        self.assertEqual(serializer.data, self.user.profile.highlights)
 
     def test_highlight_model_string_representation(self):
         """
@@ -70,15 +69,19 @@ class TestHighlightsModel(TestCase):
         username = highlight.profile.user.username
         article_title = highlight.article.title
         highlight_id = highlight.id
+        private = highlight.private
         rep = """
-            Highlight - 
-            id:{} username: {}, 
+            Highlight Instance
+            -------------------
+            id:{} username: {},
+            private: {}, 
             title: {}, 
             start_index: {}, 
             end_index: {}
         """.format(
             highlight_id,
             username,
+            private,
             article_title,
             highlight.start_index,
             highlight.end_index

@@ -20,7 +20,7 @@ class TestHighlightViews(TestCase):
         """
         Add dummy data to test the highlights views.
         """
-
+        self.highlight_data, self.highlight_data2 = None, None
         self.user_data = {
             "username": "test_user",
             "email": "test_user@mailinator.com",
@@ -30,36 +30,33 @@ class TestHighlightViews(TestCase):
         self.user = User.objects.create_user(**self.user_data)
         self.article_data = {
             'title': 'the quick brown fox',
-            'body': """this article is nice
-            this article is nice
-            this article is nice
-            this article is nice
-            this article is nice.
-            """,
+            'body': "this article is nice" * 10,
             'description': 'this is a description',
             'author': self.user,
             'tags': []
         }
         self.article_data2 = {
             'title': 'New article data',
-            'body': """this article is new
-            this article is new
-            this article is new
-            this article is new
-            this article is new
-            this article is new
-            """,
+            'body': "this article is nice" * 10,
             'description': 'this is a new description',
             'author': self.user,
             'tags': []
         }
         self.update_article = {
-            'body': """this article is new
-                    this article is new
-                    this article is updated
-                    this article is new
-                    this article is updated
-                    """
+            'body': "this article is updated" * 10,
+        }
+        self.highlight_data = {
+            "highlight_data": {
+                "start_index": 2,
+                "end_index": 8
+            }
+        }
+        self.highlight_data2 = {
+            "highlight_data": {
+                "start_index": 14,
+                "end_index": 24,
+                "private": False
+            }
         }
         self.article = ArticleSerializer(data=self.article_data)
         self.article.is_valid()
@@ -95,31 +92,19 @@ class TestHighlightViews(TestCase):
         """
         token = self.login_a_user()
         headers = {'HTTP_AUTHORIZATION': 'Bearer ' + token}
-        highlight_data = {
-            "highlight_data": {
-                "start_index": 2,
-                "end_index": 8
-            }
-        }
-        highlight_data2 = {
-            "highlight_data": {
-                "start_index": 14,
-                "end_index": 24
-            }
-        }
-        response = self.test_client.post(
+        self.test_client.post(
             reverse("highlights:create-get-delete-highlights",
                     kwargs={"slug": self.article.slug}),
             **headers,
             content_type='application/json',
-            data=json.dumps(highlight_data)
+            data=json.dumps(self.highlight_data)
         )
         response = self.test_client.post(
             reverse("highlights:create-get-delete-highlights",
                     kwargs={"slug": self.article.slug}),
             **headers,
             content_type='application/json',
-            data=json.dumps(highlight_data2)
+            data=json.dumps(self.highlight_data2)
         )
 
         return response
@@ -130,18 +115,12 @@ class TestHighlightViews(TestCase):
         """
         token = self.login_a_user()
         headers = {'HTTP_AUTHORIZATION': 'Bearer ' + token}
-        highlight_data = {
-            "highlight_data": {
-                "start_index": 2,
-                "end_index": 8
-            }
-        }
         response = self.test_client.post(
             reverse("highlights:create-get-delete-highlights",
                     kwargs={"slug": self.article.slug}),
             **headers,
             content_type='application/json',
-            data=json.dumps(highlight_data)
+            data=json.dumps(self.highlight_data)
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -184,6 +163,53 @@ class TestHighlightViews(TestCase):
             HIGHLIGHT_MSGS['HIGHLIGHTS_FOUND'],
             response.data['message'])
 
+    def test_user_can_fetch_all_public_highlights_for_an_article(self):
+        """
+        Test user can fetch all public highlights for a specific article.
+        """
+        token = self.login_a_user()
+        headers = {'HTTP_AUTHORIZATION': 'Bearer ' + token}
+        self.create_highlights()
+        response = self.test_client.get(
+            reverse("highlights:get-all-public-highlights",
+                    kwargs={"slug": self.article.slug}),
+            **headers,
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            HIGHLIGHT_MSGS['PUBLIC_HIGHLIGHTS_FOUND'],
+            response.data['message'])
+
+        self.test_client.post(
+            reverse("highlights:create-get-delete-highlights",
+                    kwargs={"slug": self.article.slug}),
+            **headers,
+            content_type='application/json',
+            data=json.dumps(self.highlight_data2)
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_404 = self.test_client.get(
+            reverse("highlights:get-all-public-highlights",
+                    kwargs={"slug": self.article.slug}),
+            **headers,
+            content_type='application/json'
+        )
+        self.assertEqual(response_404.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            HIGHLIGHT_MSGS['NO_PUBLIC_HIGHLIGHTS'],
+            response_404.data['errors'])
+        response = self.test_client.get(
+            reverse("highlights:get-all-public-highlights",
+                    kwargs={"slug": 'fake-slug'}),
+            **headers,
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            HIGHLIGHT_MSGS['ARTICLE_NOT_FOUND'],
+            response.data['errors'])
+
     def test_user_gets_empty_list_if_they_have_no_highlights(self):
         """
         Test user gets empty list if they have no highlights for a specific article.
@@ -207,19 +233,13 @@ class TestHighlightViews(TestCase):
         """
         token = self.login_a_user()
         headers = {'HTTP_AUTHORIZATION': 'Bearer ' + token}
-        highlight_data = {
-            "highlight_data": {
-                "start_index": 2,
-                "end_index": 8
-            }
-        }
         self.create_highlights()
         response = self.test_client.post(
             reverse("highlights:create-get-delete-highlights",
                     kwargs={"slug": self.article.slug}),
             **headers,
             content_type='application/json',
-            data=json.dumps(highlight_data)
+            data=json.dumps(self.highlight_data)
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
@@ -232,18 +252,12 @@ class TestHighlightViews(TestCase):
         """
         token = self.login_a_user()
         headers = {'HTTP_AUTHORIZATION': 'Bearer ' + token}
-        highlight_data = {
-            "highlight_data": {
-                "start_index": 2,
-                "end_index": 8
-            }
-        }
         response = self.test_client.post(
             reverse("highlights:create-get-delete-highlights",
                     kwargs={"slug": 'fake-slug'}),
             **headers,
             content_type='application/json',
-            data=json.dumps(highlight_data)
+            data=json.dumps(self.highlight_data)
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -251,7 +265,7 @@ class TestHighlightViews(TestCase):
             HIGHLIGHT_MSGS['ARTICLE_NOT_FOUND'],
             response.data['errors'])
 
-    def test_user_update_a_highlight_comment(self):
+    def test_user_update_a_highlight_comment_or_privacy(self):
         """
         Test a user can update a highlight's comment
         """
@@ -259,7 +273,8 @@ class TestHighlightViews(TestCase):
         headers = {'HTTP_AUTHORIZATION': 'Bearer ' + token}
         highlight_data = {
             "highlight_data": {
-                "comment": "updated comment"
+                "comment": "updated comment",
+                "private": False,
             }
         }
         res = self.create_highlights()
@@ -275,6 +290,39 @@ class TestHighlightViews(TestCase):
         self.assertEqual(
             HIGHLIGHT_MSGS['HIGHLIGHT_UPDATED'],
             response.data['message'])
+        self.assertFalse(response.data['highlight']['private'])
+        response = self.test_client.patch(
+            reverse("highlights:update-highlights",
+                    kwargs={"pk": highlight_id}),
+            **headers,
+            content_type='application/json',
+            data=json.dumps(highlight_data)
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_user_cannot_update_a_highlight_without_new_comment_or_privacy(self):
+        """
+        Test a user can update a highlight's comment
+        """
+        token = self.login_a_user()
+        headers = {'HTTP_AUTHORIZATION': 'Bearer ' + token}
+        highlight_data = {
+            "highlight_data": {
+            }
+        }
+        res = self.create_highlights()
+        highlight_id = res.data['highlight']['id']
+        response = self.test_client.patch(
+            reverse("highlights:update-highlights",
+                    kwargs={"pk": highlight_id}),
+            **headers,
+            content_type='application/json',
+            data=json.dumps(highlight_data)
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            HIGHLIGHT_MSGS['HIGHLIGHTS_COMMENT_OR_PRIVATE_FIELD_REQUIRED'],
+            response.data['errors'])
 
     def test_user_cannot_update_a_highlight_comment_if_highlight_is_nonexistent(self):
         """
@@ -307,12 +355,6 @@ class TestHighlightViews(TestCase):
         """
         token = self.login_a_user()
         headers = {'HTTP_AUTHORIZATION': 'Bearer ' + token}
-        highlight_data = {
-            "highlight_data": {
-                "start_index": 2,
-                "end_index": 8
-            }
-        }
         response = self.test_client.get(
             reverse("highlights:create-get-delete-highlights",
                     kwargs={"slug": 'fake-slug'}),

@@ -14,12 +14,13 @@ class HighlightSerializer(serializers.ModelSerializer):
     start_index = serializers.IntegerField(required=True, min_value=0)
     end_index = serializers.IntegerField(required=True, min_value=1)
     comment = serializers.CharField(required=False)
+    private = serializers.BooleanField(required=False)
     article = serializers.SerializerMethodField()
     highlighted_by = serializers.SerializerMethodField()
 
     class Meta:
         model = Highlights
-        fields = ('id', 'start_index', 'article', 'end_index', 'comment', 'text', 'highlighted_by')
+        fields = ('id', 'start_index', 'article', 'end_index', 'comment', 'text', 'private', 'highlighted_by')
         read_only_fields = ('created_at',)
 
     def validate(self, data):
@@ -29,11 +30,11 @@ class HighlightSerializer(serializers.ModelSerializer):
         """
         if data['start_index'] > data['end_index']:
             raise serializers.ValidationError(HL_VALIDATION_MSGS["END_LESS_THAN_START"])
-        article_length = len(self.initial_data['article'].body) - 1
+        article_length = len(self.context['article'].body) - 1
         if article_length < data['start_index'] or article_length < data['end_index']:
             raise serializers.ValidationError(HL_VALIDATION_MSGS["OUT_OF_RANGE"])
-        data.update({'article': self.initial_data['article']})
-        data.update({'profile': self.initial_data['profile']})
+        data.update({'article': self.context['article']})
+        data.update({'profile': self.context['profile']})
         return data
 
     def get_text(self, obj):
