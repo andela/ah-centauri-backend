@@ -13,5 +13,5 @@ class SearchJSONRenderer(JSONRenderer):
         # check for this case.
         return json.dumps({
             "articles": data,
-            'articlesCount': len(data),
+            'articlesCount': data['count'],
         })
