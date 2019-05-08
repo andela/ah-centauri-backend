@@ -4,7 +4,7 @@ from authors.apps.highlights.views import (
     CreateGetDeleteMyHighlightsAPIView,
     GetAllMyHighlightsAPIView,
     UpdateMyHighlightsAPIView,
-)
+    GetAllHighlightsForArticleAPIView)
 
 app_name = 'bookmarks'
 
@@ -18,4 +18,6 @@ urlpatterns = [
     path('highlights/<slug:slug>/',
          CreateGetDeleteMyHighlightsAPIView.as_view(),
          name='create-get-delete-highlights'),
+    path('highlights/<slug:slug>/all/', GetAllHighlightsForArticleAPIView.as_view(),
+         name='get-all-public-highlights'),
 ]

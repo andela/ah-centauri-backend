@@ -91,10 +91,3 @@ class TestCustomFollow(TestCase):
             CustomFollows.objects.get,
             to_profile_id=self.user2_profile.id
         )
-
-    def test_user_can_get_their_highlights(self):
-        """
-        Test that a user can get their article highlights as a profile property
-        :return:
-        """
-        self.assertEqual([], self.user1_profile.highlights)
