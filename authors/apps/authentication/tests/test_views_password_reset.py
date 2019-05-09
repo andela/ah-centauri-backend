@@ -42,7 +42,7 @@ class PasswordResetViewTest(TestCase):
 
     def test_valid_password_reset_request(self):
         """
-        Test if user can make a request to reset their password
+        Test if user can make a request to reset their password.
         """
         response = self.client.post(
             reverse('authentication:password_reset'),

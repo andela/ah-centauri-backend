@@ -6,12 +6,12 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
-# Set the host url for the password reset link
-host_url = os.environ.get('AH_HOST_URL')
+# react url
+react_url = os.environ.get('REACT_CLIENT_URL')
 # Set the sender email for the password reset emails
 ah_centauri_sender_email = "ah.centauri@gmail.com"
 # Set the url path for a password reset
-password_reset_urlpath = "password_reset/"
+password_reset_urlpath = "reset/"
 
 
 class PasswordResetTokenHandler:
@@ -37,7 +37,7 @@ class PasswordResetTokenHandler:
             False - if the email was not sent.
         """
         # Create the password reset link to be sent in the email using the token.
-        password_reset_link = f"{request.scheme}://{request.get_host()}/" + password_reset_urlpath + token + "/"
+        password_reset_link = react_url + password_reset_urlpath + token + "/"
         email_details_context = {
             'username': user.username,
             'password_reset_link': password_reset_link
