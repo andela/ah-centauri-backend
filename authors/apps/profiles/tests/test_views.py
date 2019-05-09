@@ -175,7 +175,7 @@ class TestProfileViews(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['user']['profile']['image_url'],
-                         "https://res.cloudinary.com/daniel2019/image/upload/c_fill,h_150,w_100/dogs")
+                         "https://res.cloudinary.com/daniel2019/image/upload/c_fill,h_400,w_400/dogs")
 
     def test_if_one_can_upload_pdf_as_profile_image(self):
         """ test if an profile image uploads successfully """
