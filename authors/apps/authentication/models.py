@@ -77,10 +77,14 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     is_verified = models.BooleanField(default=False)
 
+    # A unique identifier representing what method of authentication used
+    # If user logs in using social accounts their id is saved in this object.
+    social_id = models.CharField(db_index=True, null=True, max_length=255)
+
     # A timestamp representing when this object was created.
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # A timestamp reprensenting when this object was last updated.
+    # A timestamp representing when this object was last updated.
     updated_at = models.DateTimeField(auto_now=True)
 
     # More fields required by Django when specifying a custom user model.

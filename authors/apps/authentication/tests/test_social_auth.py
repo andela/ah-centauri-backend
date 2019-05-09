@@ -1,59 +1,111 @@
-import os
+from unittest.mock import patch
 
+from django.contrib.auth import get_user_model
+from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
-
-AUTH_URL = reverse('authentication:social')
+from rest_framework.test import APIClient
 
 
-class SocialAuthTest(APITestCase):
-    """
-    Base tet class for social authentication
-    """
+FACEBOOK_URL = reverse('authentication:facebook')
+GOOGLE_URL = reverse('authentication:google')
+TWITTER_URL = reverse('authentication:twitter')
+
+
+GOOGLE_VALIDATION = "authors.apps.authentication.validators.SocialValidation.google_auth_validation"
+FACEBOOK_VALIDATION = "authors.apps.authentication.validators.SocialValidation.facebook_auth_validation"
+TWITTER_VALIDATION = "authors.apps.authentication.validators.SocialValidation.twitter_auth_validation"
+
+
+def sample_user():
+    return get_user_model().objects.create_user(email='cmeordvda_1554574357@tfbnw.net',
+                                                username='cmeordvda',
+                                                password='T35tP45w0rd'
+                                                )
+
+
+class SocialAuthTest(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-
-    def authenticate(self, provider=os.environ.get('SOCIAL_PROVIDER'),
-                     access_token_secret=os.environ.get('ACCESS_TOKEN_SECRET'),
-                     access_token=os.environ.get('ACCESS_TOKEN')):
-        payload = {
-            'access_token': access_token,
-            'provider': provider,
-            "access_token_secret": access_token_secret
+        self.facebook_payload = {
+            "facebook": {
+                "access_token": "valid token for facebook"
+            }
         }
-        return self.client.post(AUTH_URL, payload)
+        self.google_payload = {
+            "google": {
+                "access_token": "valid token for google"
+            }
+        }
+        self.twitter_payload = {
+            "twitter": {
+                "access_token": "valid token for twitter",
+                "access_token_secret": "valid token for twitter"
+            }
+        }
 
-    # def test_user_authenticated_successfully(self):
-    #     """test user is authenticated successfully with all
-    #     correct parameters"""
-    #     res = self.authenticate()
-    #
-    #     self.assertEqual(res.status_code, status.HTTP_200_OK)
+    def test_facebook_login_valid_token(self):
+        with patch(FACEBOOK_VALIDATION) as mf:
+            mf.return_value = {
+                "name": "Dick Alceejfaafeif Bowerssky",
+                "email": "bcmeordvda_1554574357@tfbnw.net",
+                "id": "102723377587866"}
+            res = self.client.post(
+                FACEBOOK_URL,
+                self.facebook_payload,
+                format='json')
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertIn("token", res.data)
 
-    def test_provider_not_in_payload(self):
-        """Test that the OAuth provider is included in request."""
-        res = self.authenticate(provider='')
-
+    def test_facebook_login_invalid_token(self):
+        res = self.client.post(
+            FACEBOOK_URL,
+            self.facebook_payload,
+            format='json')
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('errors', res.data)
 
-    def test_invalid_provider(self):
-        """Test given a none existent provider, should only be
-            google-oauth2, facebook, twitter
-        """
-        res = self.authenticate(provider='google')
+    def test_google_login_valid_token(self):
+        with patch(GOOGLE_VALIDATION) as mg:
+            mg.return_value = {
+                "name": "alexa",
+                "email": "alexa@gmail.com",
+                "sub": "102723377587866"
+            }
+            res = self.client.post(
+                GOOGLE_URL,
+                self.google_payload,
+                format='json')
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertIn("token", res.data)
+
+    def test_google_login_invalid_token(self):
+        res = self.client.post(
+            GOOGLE_URL,
+            self.google_payload,
+            format='json')
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertDictEqual(res.data, {
-            "errors": "Provider not supported, Please use 'google-oauth2','facebook', or 'twitter'."
-        })
+        self.assertIn('errors', res.data)
 
-    def test_invalid_access_token_in_payload(self):
-        """Test tha OAuth access token is provided"""
-        res = self.authenticate(access_token='dgfhdf',
-                                access_token_secret='gfdtetrtr')
+    def test_twitter_login_valid_token(self):
+        with patch(TWITTER_VALIDATION) as mg:
+            mg.return_value = {
+                "name": "alexa",
+                "email": "alexa@gmail.com",
+                "id_str": "102723377587866"
+            }
+            res = self.client.post(
+                TWITTER_URL,
+                self.twitter_payload,
+                format='json')
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertIn("token", res.data)
 
+    def test_twitter_login_invalid_token(self):
+        res = self.client.post(
+            TWITTER_URL,
+            self.google_payload,
+            format='json')
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertDictEqual(res.data, {
-            "errors": "Your credentials aren't allowed"
-        })
+        self.assertIn('errors', res.data)
