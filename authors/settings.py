@@ -239,6 +239,7 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = os.environ.get('EMAIL_PORT')
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_VERIFICATION_BASE_URL = os.environ.get('EMAIL_VERIFICATION_BASE_URL')
 
 CLOUDINARY = {
     'cloud_name': config('CLOUDINARY_CLOUD_NAME'),
