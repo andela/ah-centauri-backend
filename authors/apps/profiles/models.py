@@ -46,7 +46,7 @@ class Profile(TimeStampModel):
     @property
     def get_cloudinary_url(self):
         image_url = CloudinaryImage(str(self.image)).build_url(
-            width=100, height=150, crop='fill')
+            width=400, height=400, crop='fill')
         return image_url
 
     @property
