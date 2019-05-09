@@ -64,13 +64,13 @@ class RegistrationAPIView(APIView):
         # The combination of the token and uidb64 makes sure that the user
         # has a unique verification link that expires in 7 days by default
         subject = "Email Verification"
-        kwargs = {
+        self._kwargs = {
             'uidb64': urlsafe_base64_encode(force_bytes(user.pk)),
             'token': email_activation_token.make_token(user)
         }
-        verification_url = reverse(
-            'authentication:verify', kwargs=kwargs)
-        url = f"{request.scheme}://{request.get_host()}{verification_url}"
+
+        url = self.get_email_verification_url(request)
+
         context = {'username': user.username,
                    'url': url}
         message = render_to_string('verify.html', context)
@@ -84,6 +84,20 @@ class RegistrationAPIView(APIView):
             "message": f"A verification email has been sent to {user.email}",
             "data": serializer.data
         }, status=status.HTTP_201_CREATED)
+
+    def get_email_verification_url(self, request):
+
+        base_url = settings.EMAIL_VERIFICATION_BASE_URL
+
+        uid = self._kwargs.get('uidb64')
+        token = self._kwargs.get('token')
+
+        if base_url:
+            return f"{request.scheme}://{base_url}/{token}/{uid}"
+
+        verification_url = reverse('authentication:verify', kwargs=self._kwargs)
+
+        return f"{request.scheme}://{request.get_host()}{verification_url}"
 
 
 class VerifyEmailView(APIView):
@@ -276,24 +290,24 @@ class PasswordResetAPIView(APIView):
                          responses={
                              200: PasswordResetRequestSerializer()})
     def post(self, request):
-        """ 
+        """
         Create a password reset link and send it to the user who requested it.
         View method user to send the password reset link to a user's email address
-        
+
         Params
         -------
         request: Object with request data and functions
-        
+
         Returns
         --------
         Response object:
             {
                 "message": "message body"
-            } 
+            }
             OR
             {
                 "errors": "error details body"
-            } 
+            }
         """
 
         # Get the user email from the request details in the "user dictionary"
@@ -344,9 +358,9 @@ class PasswordResetAPIView(APIView):
 
 
 class SetPasswordAPIView(APIView):
-    """ 
+    """
     View used to change a users password when given a password reset token
-    
+
     """
     permission_classes = (AllowAny,)
 
@@ -357,22 +371,22 @@ class SetPasswordAPIView(APIView):
         """
         Create a password reset link and send it to the user who requested it.
         View method user to send the password reset link to a user's email address
-        
+
         Params
         -------
         request: Object with request data and functions
-        reset_token: String required to successfully reset the password 
-        
+        reset_token: String required to successfully reset the password
+
         Returns
         --------
         Response object:
             {
                 "message": "message body"
-            } 
+            }
             OR
             {
                 "errors": "error details body"
-            } 
+            }
         """
 
         # Set the token to the parameter from the request
@@ -388,7 +402,7 @@ class SetPasswordAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Check if the password provided passes the validation requirements 
+        # Check if the password provided passes the validation requirements
         # 1 uppercase, 1 lowercase and a special character.
 
         set_password_serializer = SetNewPasswordSerializer(
@@ -432,7 +446,7 @@ class SetPasswordAPIView(APIView):
                 user_found = User.objects.get(email=user_data['user_email'])
                 user_found.set_password(password_change["new_password"])
                 user_found.save()
-                # Update and save the Password Reset record 
+                # Update and save the Password Reset record
                 # so the token associated with it can't be used again.
                 password_reset_record = PasswordReset.objects.get(token=password_reset_token)
                 password_reset_record.used = True
