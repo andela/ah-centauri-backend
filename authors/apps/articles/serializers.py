@@ -1,19 +1,19 @@
+import os
 from urllib import parse
 
 import readtime
-from django.urls import reverse
-from rest_framework import serializers
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.contenttypes.models import ContentType
+from rest_framework import serializers
 from taggit_serializer.serializers import (TagListSerializerField,
                                            TaggitSerializer, )
-from django.contrib.auth.models import AnonymousUser
+
 from authors.apps.articles.models import (Articles,
                                           Ratings,
                                           Favorite,
                                           ReportArticles, LikeDislike)
 from authors.apps.articles.utils import ChoicesField
 
-from django.contrib.contenttypes.models import ContentType
 
 class TagSerializer(TagListSerializerField):
     default_error_messages = {
@@ -64,7 +64,7 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
                                             vote=1)
 
         return bool(len(list(ld)))
-        
+
     def get_has_disliked(self, instance):
         """
         Handle checking if a user has disliked an article before
@@ -136,23 +136,18 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
             title = obj.title
             description = obj.description
 
-            article_link = reverse(
-                'articles:article', kwargs={'slug': obj.slug})
-
+            react_url = os.environ.get('REACT_CLIENT_URL')  # Get the react client URL
+            article_link = react_url + 'article/' + obj.slug
             request = self.context.get('request')
 
             if request:
-                article_link = parse.quote(
-                    request.build_absolute_uri(article_link))
+                article_link = parse.quote(article_link)
                 title = parse.quote(title)
                 description = parse.quote(description)
 
-                links['facebook'] = "https://www.facebook.com/sharer/sharer.php?u={}".format(
-                    article_link)
-                links['twitter'] = "https://twitter.com/intent/tweet?url={}&text={}".format(
-                    article_link, title)
-                links['email'] = "mailto:?&subject={}&body={}".format(
-                    title, description, article_link)
+                links['facebook'] = "https://www.facebook.com/sharer/sharer.php?u={}".format(article_link)
+                links['twitter'] = "https://twitter.com/intent/tweet?url={}&text={}".format(article_link, title)
+                links['email'] = "mailto:?&subject={}&body={}".format(title, description, article_link)
 
         # return whatever we now have in the :links dictionary
         return links
