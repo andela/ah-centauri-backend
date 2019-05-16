@@ -6,8 +6,10 @@ PASSWORD_RESET_MSGS = {
     "UNMATCHING_PASSWORDS": (" The new password and confirmed password do not match"),
     "USED_RESET_LINK": ("The password reset link is no longer valid . "
                         "Please request a new password reset link if you forgot your password"),
-    "SENT_RESET_LINK": ("A password reset link has been sent to your email."
-                        " Please follow the link to complete the password reset"),
+    "SENT_RESET_LINK": ("We have emailed you instructions for resetting your password,"
+                         "if an account exists with the email you entered, you shoudld receive them shortly."
+                         "If you do not receive an email, please ensure you have entered the address you registered with,"
+                         "and check your spam folder."),
     "INVALID_RESET_LINK": ("The password reset link is no longer valid . "
                            "Please request a new password reset link if you forgot your password"
                            )
