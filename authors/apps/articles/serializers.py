@@ -9,9 +9,10 @@ from taggit_serializer.serializers import (TagListSerializerField,
 from authors.apps.articles.models import (Articles,
                                           Ratings,
                                           Favorite,
-                                          ReportArticles, )
+                                          ReportArticles, LikeDislike)
 from authors.apps.articles.utils import ChoicesField
 
+from django.contrib.contenttypes.models import ContentType
 
 class TagSerializer(TagListSerializerField):
     default_error_messages = {
@@ -33,11 +34,53 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
     average_rating = serializers.ReadOnlyField(source='get_average_rating')
     likes = serializers.ReadOnlyField(source='likes.likes')
     dislikes = serializers.ReadOnlyField(source='likes.dislikes')
+    has_liked = serializers.SerializerMethodField()
+    has_disliked = serializers.SerializerMethodField()
     tags = TagSerializer()
     share_links = serializers.SerializerMethodField()
     # string describe the read time of an article e.g '1 min read'
     read_time = serializers.ReadOnlyField()
     favorited = serializers.ReadOnlyField(source="favoriters")
+
+    def get_has_liked(self, instance):
+        """
+        Handle checking if comment has been edited.
+        :param instance:
+        :return:
+        """
+
+        request = self.context.get('request')
+
+        ld = []
+
+        if request:
+            ct = ContentType.objects.get_for_model(Articles)
+            ld = LikeDislike.objects.filter(content_type=ct,
+                                            user=request.user,
+                                            object_id=instance.id,
+                                            vote=1)
+
+        return bool(len(list(ld)))
+        
+    def get_has_disliked(self, instance):
+        """
+        Handle checking if comment has been edited.
+        :param instance:
+        :return:
+        """
+
+        request = self.context.get('request')
+
+        ld = []
+
+        if request:
+            ct = ContentType.objects.get_for_model(Articles)
+            ld = LikeDislike.objects.filter(content_type=ct,
+                                            user=request.user,
+                                            object_id=instance.id,
+                                            vote=-1)
+
+        return bool(len(list(ld)))
 
     def to_representation(self, instance):
         """ Add the read time of the article."""
@@ -56,18 +99,23 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
             title = obj.title
             description = obj.description
 
-            article_link = reverse('articles:article', kwargs={'slug': obj.slug})
+            article_link = reverse(
+                'articles:article', kwargs={'slug': obj.slug})
 
             request = self.context.get('request')
 
             if request:
-                article_link = parse.quote(request.build_absolute_uri(article_link))
+                article_link = parse.quote(
+                    request.build_absolute_uri(article_link))
                 title = parse.quote(title)
                 description = parse.quote(description)
 
-                links['facebook'] = "https://www.facebook.com/sharer/sharer.php?u={}".format(article_link)
-                links['twitter'] = "https://twitter.com/intent/tweet?url={}&text={}".format(article_link, title)
-                links['email'] = "mailto:?&subject={}&body={}".format(title, description, article_link)
+                links['facebook'] = "https://www.facebook.com/sharer/sharer.php?u={}".format(
+                    article_link)
+                links['twitter'] = "https://twitter.com/intent/tweet?url={}&text={}".format(
+                    article_link, title)
+                links['email'] = "mailto:?&subject={}&body={}".format(
+                    title, description, article_link)
 
         # return whatever we now have in the :links dictionary
         return links
@@ -89,7 +137,8 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
         tags = validated_data.pop('tags', old_tags)
         instance.title = validated_data.get('title', instance.title)
         instance.body = validated_data.get('body', instance.body)
-        instance.description = validated_data.get('description', instance.description)
+        instance.description = validated_data.get(
+            'description', instance.description)
         unique_tags = list(set(old_tags + tags))
         instance.tags.set(*unique_tags)
 
@@ -102,11 +151,10 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
     class Meta:
         model = Articles
 
-        fields = ('id', 'likes', 'dislikes', 'created_at', 'updated_at',
+        fields = ('id', 'likes', 'dislikes', 'has_liked', 'has_disliked', 'created_at', 'updated_at',
                   'author', 'title', 'tags', 'body', 'description',
                   'average_rating', 'slug', 'read_time', 'share_links',
                   'favorited')
-
 
         extra_kwargs = {
             'url': {
@@ -172,7 +220,8 @@ class ReportsSerializer(serializers.ModelSerializer):
     article = serializers.ReadOnlyField(source='article.title')
     slug = serializers.ReadOnlyField(source='article.slug')
     report = serializers.CharField(max_length=140)
-    type_of_report = ChoicesField(choices=["spam", "harassment", "rules violation", "plagiarism"])
+    type_of_report = ChoicesField(
+        choices=["spam", "harassment", "rules violation", "plagiarism"])
 
     class Meta:
         model = ReportArticles
