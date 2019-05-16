@@ -40,6 +40,7 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
     read_time = serializers.ReadOnlyField()
     favorited = serializers.ReadOnlyField(source="favoriters")
     has_rating = serializers.SerializerMethodField()
+    auth_user_rating = serializers.SerializerMethodField()
 
     def to_representation(self, instance):
         """ Add the read time of the article."""
@@ -51,6 +52,27 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
         # return the article's details along with it's read time
         return article_rep
 
+    def get_auth_user_rating(self, instance):
+        rating = {}
+
+        if isinstance(instance, Articles):
+            request = self.context.get('request')
+
+            if request and not isinstance(request.user, AnonymousUser):
+                rating = Ratings.objects.filter(
+                    author=request.user, article=instance).first()
+
+            if rating:
+                rating = {
+                    'id': rating.id,
+                    'created_at': rating.created_at.strftime('%c'),
+                    'updated_at': rating.updated_at.strftime('%c'),
+                    'value': rating.value,
+                    'review': rating.review,
+                }
+
+        return rating
+
     def get_has_rating(self, instance):
 
         has_rating = False
@@ -59,7 +81,8 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
             request = self.context.get('request')
 
             if request and not isinstance(request.user, AnonymousUser):
-                has_rating = Ratings.objects.filter(author=request.user, article=instance).exists()
+                has_rating = Ratings.objects.filter(
+                    author=request.user, article=instance).exists()
 
         return has_rating
 
@@ -70,18 +93,23 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
             title = obj.title
             description = obj.description
 
-            article_link = reverse('articles:article', kwargs={'slug': obj.slug})
+            article_link = reverse(
+                'articles:article', kwargs={'slug': obj.slug})
 
             request = self.context.get('request')
 
             if request:
-                article_link = parse.quote(request.build_absolute_uri(article_link))
+                article_link = parse.quote(
+                    request.build_absolute_uri(article_link))
                 title = parse.quote(title)
                 description = parse.quote(description)
 
-                links['facebook'] = "https://www.facebook.com/sharer/sharer.php?u={}".format(article_link)
-                links['twitter'] = "https://twitter.com/intent/tweet?url={}&text={}".format(article_link, title)
-                links['email'] = "mailto:?&subject={}&body={}".format(title, description, article_link)
+                links['facebook'] = "https://www.facebook.com/sharer/sharer.php?u={}".format(
+                    article_link)
+                links['twitter'] = "https://twitter.com/intent/tweet?url={}&text={}".format(
+                    article_link, title)
+                links['email'] = "mailto:?&subject={}&body={}".format(
+                    title, description, article_link)
 
         # return whatever we now have in the :links dictionary
         return links
@@ -103,7 +131,8 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
         tags = validated_data.pop('tags', old_tags)
         instance.title = validated_data.get('title', instance.title)
         instance.body = validated_data.get('body', instance.body)
-        instance.description = validated_data.get('description', instance.description)
+        instance.description = validated_data.get(
+            'description', instance.description)
         unique_tags = list(set(old_tags + tags))
         instance.tags.set(*unique_tags)
 
@@ -118,8 +147,7 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
 
         fields = ('id', 'likes', 'dislikes', 'created_at', 'updated_at',
                   'author', 'title', 'tags', 'body', 'description',
-                  'average_rating', 'slug', 'read_time', 'share_links', 'has_rating', 'favorited')
-
+                  'average_rating', 'slug', 'read_time', 'share_links', 'has_rating', 'auth_user_rating', 'favorited')
 
         extra_kwargs = {
             'url': {
@@ -185,7 +213,8 @@ class ReportsSerializer(serializers.ModelSerializer):
     article = serializers.ReadOnlyField(source='article.title')
     slug = serializers.ReadOnlyField(source='article.slug')
     report = serializers.CharField(max_length=140)
-    type_of_report = ChoicesField(choices=["spam", "harassment", "rules violation", "plagiarism"])
+    type_of_report = ChoicesField(
+        choices=["spam", "harassment", "rules violation", "plagiarism"])
 
     class Meta:
         model = ReportArticles
