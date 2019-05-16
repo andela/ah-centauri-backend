@@ -5,7 +5,7 @@ from django.urls import reverse
 from rest_framework import serializers
 from taggit_serializer.serializers import (TagListSerializerField,
                                            TaggitSerializer, )
-
+from django.contrib.auth.models import AnonymousUser
 from authors.apps.articles.models import (Articles,
                                           Ratings,
                                           Favorite,
@@ -53,7 +53,7 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
 
         ld = []
 
-        if request:
+        if request and not isinstance(request.user, AnonymousUser):
             ct = ContentType.objects.get_for_model(Articles)
             ld = LikeDislike.objects.filter(content_type=ct,
                                             user=request.user,
@@ -73,7 +73,7 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
 
         ld = []
 
-        if request:
+        if request and not isinstance(request.user, AnonymousUser):
             ct = ContentType.objects.get_for_model(Articles)
             ld = LikeDislike.objects.filter(content_type=ct,
                                             user=request.user,
