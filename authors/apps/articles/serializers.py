@@ -3,6 +3,7 @@ from urllib import parse
 import readtime
 from django.urls import reverse
 from rest_framework import serializers
+from django.contrib.auth.models import AnonymousUser
 from taggit_serializer.serializers import (TagListSerializerField,
                                            TaggitSerializer, )
 
@@ -38,6 +39,7 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
     # string describe the read time of an article e.g '1 min read'
     read_time = serializers.ReadOnlyField()
     favorited = serializers.ReadOnlyField(source="favoriters")
+    has_rating = serializers.SerializerMethodField()
 
     def to_representation(self, instance):
         """ Add the read time of the article."""
@@ -48,6 +50,18 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
         article_rep['read_time'] = str(readtime.of_html(article_rep['body']))
         # return the article's details along with it's read time
         return article_rep
+
+    def get_has_rating(self, instance):
+
+        has_rating = False
+
+        if isinstance(instance, Articles):
+            request = self.context.get('request')
+
+            if request and not isinstance(request.user, AnonymousUser):
+                has_rating = Ratings.objects.filter(author=request.user, article=instance).exists()
+
+        return has_rating
 
     def get_share_links(self, obj):
         links = {}
@@ -104,8 +118,7 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
 
         fields = ('id', 'likes', 'dislikes', 'created_at', 'updated_at',
                   'author', 'title', 'tags', 'body', 'description',
-                  'average_rating', 'slug', 'read_time', 'share_links',
-                  'favorited')
+                  'average_rating', 'slug', 'read_time', 'share_links', 'has_rating', 'favorited')
 
 
         extra_kwargs = {
@@ -126,7 +139,7 @@ class RatingsSerializer(serializers.ModelSerializer):
 
     def validate_value(self, data):
         """
-        Method to validate value given during rating 
+        Method to validate value given during rating
 
         Params
         -------

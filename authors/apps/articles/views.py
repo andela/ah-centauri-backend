@@ -48,12 +48,12 @@ class CreateArticlesAPIView(APIView):
     renderer_classes = (ArticleJSONRenderer,)
     pagination_class = LimitOffsetPagination
 
-
     def get(self, request, format=None):
         articles = Articles.objects.all()
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(articles, request)
-        serializer = self.serializer_class(page, many=True, context={'request': request})
+        serializer = self.serializer_class(
+            page, many=True, context={'request': request})
         return paginator.get_paginated_response(serializer.data)
 
     @swagger_auto_schema(request_body=ArticleSerializer,
@@ -81,13 +81,14 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
     only an article owner can edit or delete his/her article
     """
 
-    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, IsVerifiedUser,)
+    permission_classes = (IsAuthenticatedOrReadOnly,
+                          IsOwnerOrReadOnly, IsVerifiedUser,)
     serializer_class = ArticleSerializer
     renderer_classes = (ArticleJSONRenderer,)
 
     def get_object(self, slug):
         """
-        Method to return an article 
+        Method to return an article
 
         Params
         -------
@@ -120,7 +121,8 @@ class RetrieveUpdateDeleteArticleAPIView(RetrieveUpdateAPIView):
     def put(self, request, slug, format=None):
         article = self.get_object(slug)
         self.check_object_permissions(request, article)
-        serializer = ArticleSerializer(article, data=request.data, partial=True)
+        serializer = ArticleSerializer(
+            article, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         # Check if the body has been updated so as to remove highlights for the article
@@ -148,7 +150,7 @@ class CreateListRatingsAPIView(APIView):
 
     def get_object(self, slug):
         """
-        Method to return an article 
+        Method to return an article
 
         Params
         -------
@@ -158,7 +160,7 @@ class CreateListRatingsAPIView(APIView):
         --------
         an article object if found
         raises an excepition if not found
-        
+
         """
         try:
             return Articles.objects.get(slug=slug)
@@ -178,7 +180,7 @@ class CreateListRatingsAPIView(APIView):
         --------
         ratings
         error message if not found
-        
+
         """
         ratings = Ratings.objects.all()
         serializer = RatingsSerializer(ratings, many=True)
@@ -206,7 +208,7 @@ class CreateListRatingsAPIView(APIView):
                 - you try to rate your own article
                 - you try to rate an article twice
                 - any other validation errors encountered
-        
+
         """
         rating = request.data.get('rating', {})
         serializer = self.serializer_class(data=rating)
@@ -220,13 +222,18 @@ class CreateListRatingsAPIView(APIView):
         if article.author == author:
             return Response({'errors': 'cannot rate own article'}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            Ratings.objects.get(article_id=article_id, author=author)
-            return Response({'errors': 'cannot rate an article twice'}, status=status.HTTP_400_BAD_REQUEST)
-        except:
-            rating = serializer.save(author=request.user, article=article)
+        rating, created = Ratings.objects.update_or_create(
+            article_id=article_id,
+            author=author,
+            defaults={
+                'value': rating['value'],
+                'review': rating['review']
+            }
+        )
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer = self.serializer_class(instance=rating)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class RetrieveUpdateDeleteRatingAPIView(APIView):
@@ -235,7 +242,8 @@ class RetrieveUpdateDeleteRatingAPIView(APIView):
     List edit or delete a rating
     only a rating owner can edit or delete his/her article
     """
-    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, IsVerifiedUser)
+    permission_classes = (IsAuthenticatedOrReadOnly,
+                          IsOwnerOrReadOnly, IsVerifiedUser)
     serializer_class = RatingsSerializer
     renderer_classes = (RatingJSONRenderer,)
 
@@ -251,7 +259,7 @@ class RetrieveUpdateDeleteRatingAPIView(APIView):
         --------
         a rating object if found
         raises an exception if not found
-        
+
         """
         try:
             return Ratings.objects.get(pk=pk)
@@ -369,7 +377,8 @@ class LikesView(APIView):
             else:
                 like_dislike.delete()
         except LikeDislike.DoesNotExist:
-            like_dislike = obj.likes.create(user=request.user, vote=self.vote_type)
+            like_dislike = obj.likes.create(
+                user=request.user, vote=self.vote_type)
             send_notifications(request,
                                notification_type="resource_liked",
                                instance=like_dislike,
@@ -552,7 +561,7 @@ class CreateListReportsAPIView(APIView):
             - you try to report your own article
             - you are either not authenticated or not verified
             - any other validation errors encountered
-        
+
         """
         report = request.data.get('report', {})
         serializer = self.serializer_class(data=report)
@@ -596,7 +605,8 @@ class RetrieveUpdateDeleteReportAPIView(APIView):
     """
     serializer_class = ReportsSerializer
     renderer_classes = (ReportJSONRenderer,)
-    permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, IsVerifiedUser)
+    permission_classes = (IsAuthenticatedOrReadOnly,
+                          IsOwnerOrReadOnly, IsVerifiedUser)
 
     def get_object(self, pk):
         """
@@ -610,7 +620,7 @@ class RetrieveUpdateDeleteReportAPIView(APIView):
         --------
         a report object if found
         raises an exception if not found
-        
+
         """
         try:
             return ReportArticles.objects.get(pk=pk)
@@ -692,6 +702,7 @@ class CreateListAuthorsAPIView(ListAPIView):
     queryset = User.objects.all()
 
     def get_queryset(self):
-        articles = Articles.objects.values_list('author_id', flat=True).distinct()
+        articles = Articles.objects.values_list(
+            'author_id', flat=True).distinct()
         users = User.objects.filter(id__in=articles)
         return users
