@@ -31,6 +31,12 @@ class LikeDislikeManager(models.Manager):
         the dislikes add a negative value
         """
         return self.get_queryset().filter(vote__lt=0).count()
+    
+    def has_liked(self):
+        request = self.context.get('request')
+        if request:
+            self.get_queryset().filter(user=request)
+
 
 
 class LikeDislike(models.Model):

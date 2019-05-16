@@ -6,13 +6,14 @@ from rest_framework import serializers
 from django.contrib.auth.models import AnonymousUser
 from taggit_serializer.serializers import (TagListSerializerField,
                                            TaggitSerializer, )
-
+from django.contrib.auth.models import AnonymousUser
 from authors.apps.articles.models import (Articles,
                                           Ratings,
                                           Favorite,
-                                          ReportArticles, )
+                                          ReportArticles, LikeDislike)
 from authors.apps.articles.utils import ChoicesField
 
+from django.contrib.contenttypes.models import ContentType
 
 class TagSerializer(TagListSerializerField):
     default_error_messages = {
@@ -34,6 +35,8 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
     average_rating = serializers.ReadOnlyField(source='get_average_rating')
     likes = serializers.ReadOnlyField(source='likes.likes')
     dislikes = serializers.ReadOnlyField(source='likes.dislikes')
+    has_liked = serializers.SerializerMethodField()
+    has_disliked = serializers.SerializerMethodField()
     tags = TagSerializer()
     share_links = serializers.SerializerMethodField()
     # string describe the read time of an article e.g '1 min read'
@@ -41,6 +44,46 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
     favorited = serializers.ReadOnlyField(source="favoriters")
     has_rating = serializers.SerializerMethodField()
     auth_user_rating = serializers.SerializerMethodField()
+
+    def get_has_liked(self, instance):
+        """
+        Handle checking if a user has liked an article before
+        :param instance:
+        :return:
+        """
+
+        request = self.context.get('request')
+
+        ld = []
+
+        if request and not isinstance(request.user, AnonymousUser):
+            ct = ContentType.objects.get_for_model(Articles)
+            ld = LikeDislike.objects.filter(content_type=ct,
+                                            user=request.user,
+                                            object_id=instance.id,
+                                            vote=1)
+
+        return bool(len(list(ld)))
+        
+    def get_has_disliked(self, instance):
+        """
+        Handle checking if a user has disliked an article before
+        :param instance:
+        :return:
+        """
+
+        request = self.context.get('request')
+
+        ld = []
+
+        if request and not isinstance(request.user, AnonymousUser):
+            ct = ContentType.objects.get_for_model(Articles)
+            ld = LikeDislike.objects.filter(content_type=ct,
+                                            user=request.user,
+                                            object_id=instance.id,
+                                            vote=-1)
+
+        return bool(len(list(ld)))
 
     def to_representation(self, instance):
         """ Add the read time of the article."""
@@ -145,7 +188,7 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
     class Meta:
         model = Articles
 
-        fields = ('id', 'likes', 'dislikes', 'created_at', 'updated_at',
+        fields = ('id', 'likes', 'dislikes', 'has_liked', 'has_disliked', 'created_at', 'updated_at',
                   'author', 'title', 'tags', 'body', 'description',
                   'average_rating', 'slug', 'read_time', 'share_links', 'has_rating', 'auth_user_rating', 'favorited')
 
