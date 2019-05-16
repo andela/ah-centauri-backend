@@ -61,9 +61,7 @@ class PasswordResetViewTest(TestCase):
             self.invalid_password_reset_data,
             format='json'
         )
-        msg = "The user with email {} could not be found".format(
-            self.invalid_password_reset_data['user']['email']
-        )
+        msg = PASSWORD_RESET_MSGS['SENT_RESET_LINK']
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(msg, response.data['errors'])
 

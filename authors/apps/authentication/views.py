@@ -279,9 +279,7 @@ class PasswordResetAPIView(APIView):
 
         except Exception as e:
             # Send a response with an error if the user was not found.
-            msg = "The user with email {} could not be found".format(
-                user['email']
-            )
+            msg = PASSWORD_RESET_MSGS['SENT_RESET_LINK']
             return Response(
                 {"errors": msg},
                 status=status.HTTP_400_BAD_REQUEST
