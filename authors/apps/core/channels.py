@@ -27,7 +27,8 @@ class EmailNotificationChannel(BaseNotificationChannel):
 
         recipient = self.notification_kwargs['extra_data']['recipient_email']
 
-        msg = EmailMultiAlternatives(subject, message['plain_text'], sender, [recipient])
+        msg = EmailMultiAlternatives(
+            subject, message['plain_text'], sender, [recipient])
         msg.attach_alternative(message['formatted'], "text/html")
         msg.send()
 
@@ -48,7 +49,7 @@ class PusherNotificationChannel(BaseNotificationChannel):
                 'username': sender.username
             },
             'recipient': {
-              'id': recipient.id
+                'id': recipient.id
             },
             'short_description': kwargs['short_description'],
             'actions': kwargs['action'],
@@ -67,4 +68,8 @@ class PusherNotificationChannel(BaseNotificationChannel):
             ssl=True
         )
 
-        pusher.trigger('user-{}'.format(message['recipient']['id']), message['actions'], message)
+        pusher.trigger(
+            'user-{}'.format(message['recipient']['id']),
+            'notificationReceived',
+            message
+        )

@@ -9,6 +9,7 @@ from django.utils.http import (urlsafe_base64_encode,
                                urlsafe_base64_decode, )
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.generics import (RetrieveUpdateAPIView,
                                      CreateAPIView, )
 from rest_framework.permissions import (AllowAny,
@@ -407,14 +408,18 @@ class NotificationsView(APIView):
     and to mark them as read
     """
     permission_classes = (IsAuthenticated,)
+    pagination_class = PageNumberPagination
 
     def get(self, request):
-        notifications = request.user.notifications
+        notifications = request.user.notifications.all()
+
+        paginator = PageNumberPagination()
+        page = paginator.paginate_queryset(notifications, request)
 
         notifications = NotificationSerializer(
-            instance=notifications, many=True, context={'request': request})
+            page, many=True, context={'request': request})
 
-        return Response(notifications.data)
+        return paginator.get_paginated_response(notifications.data)
 
     @swagger_auto_schema(query_serializer=NotificationSerializer,
                          responses={

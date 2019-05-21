@@ -56,13 +56,13 @@ def article_published(request, **kwargs):
 
     return {
         'source': request.user,
-        'source_display_name': 'AH Publications',
+        'source_display_name': kwargs['instance'].title,
         'recipient': kwargs['recipient'],
         'category': 'Subscriptions',
-        'action': 'Published',
+        'action': 'article_published',
         'obj': kwargs['instance'].id,
-        'short_description': 'New Article Published',
-        'url': '',
+        'short_description': 'published a new article',
+        'url': kwargs['instance'].slug,
         'channels': notification_channels(kwargs['recipient']),
         'extra_data': {
             'email_message': render_to_string('articles/article_published.html', context={
@@ -86,13 +86,13 @@ def article_rated(request, **kwargs):
 
     return {
         'source': request.user,
-        'source_display_name': 'AH Publications',
+        'source_display_name': kwargs['instance'].article.title,
         'recipient': kwargs['recipient'],
         'category': 'Interactions',
-        'action': 'Rated',
+        'action': 'article_rated',
         'obj': kwargs['instance'].id,
-        'short_description': 'New Article Interactions',
-        'url': '',
+        'short_description': 'rated article',
+        'url': kwargs['instance'].article.slug,
         'channels': notification_channels(kwargs['recipient']),
         'extra_data': {
             'email_message': render_to_string(
@@ -123,10 +123,10 @@ def user_followed(request, **kwargs):
         'source_display_name': 'Followers Notification',
         'recipient': kwargs['recipient'],
         'category': 'Follows',
-        'action': '',
+        'action': 'user_followed',
         'obj': kwargs['instance'].id,
         'short_description': 'You have a new follower',
-        'url': '',
+        'url': kwargs['instance'].username,
         'channels': notification_channels(kwargs['recipient']),
         'extra_data': {
             'email_message': render_to_string(
@@ -151,13 +151,13 @@ def article_comment(request, **kwargs):
     """
     return {
         'source': request.user,
-        'source_display_name': 'AH Publications',
+        'source_display_name': kwargs['instance'].article.title,
         'recipient': kwargs['recipient'],
         'category': 'Interactions',
-        'action': 'Comment',
+        'action': 'article_comment',
         'obj': kwargs['instance'].id,
-        'short_description': 'New Article Interactions',
-        'url': '',
+        'short_description': 'commented on article',
+        'url': kwargs['instance'].article.slug,
         'channels': notification_channels(kwargs['recipient']),
         'extra_data': {
             'email_message': render_to_string(
@@ -190,7 +190,7 @@ def resource_liked(request, **kwargs):
         'source_display_name': 'AH Publications',
         'recipient': kwargs['recipient'],
         'category': 'Interactions',
-        'action': '',
+        'action': 'resource_liked',
         'obj': kwargs['instance'].id,
         'short_description': 'New Article Interactions',
         'url': '',
