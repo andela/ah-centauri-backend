@@ -80,7 +80,8 @@ class RegistrationAPIView(APIView):
                    'url': url}
         message = render_to_string('verify.html', context)
         recipients = [user.email, ]
-        msg = EmailMultiAlternatives(subject, message, 'ah.centauri@gmail.com', recipients)
+        msg = EmailMultiAlternatives(
+            subject, message, 'ah.centauri@gmail.com', recipients)
         msg.attach_alternative(message, "text/html")
         msg.send()
 
@@ -100,7 +101,8 @@ class RegistrationAPIView(APIView):
         if base_url:
             return f"{request.scheme}://{base_url}/{token}/{uid}"
 
-        verification_url = reverse('authentication:verify', kwargs=self._kwargs)
+        verification_url = reverse(
+            'authentication:verify', kwargs=self._kwargs)
 
         return f"{request.scheme}://{request.get_host()}{verification_url}"
 
@@ -158,7 +160,8 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         # There is nothing to validate or save here. Instead, we just want the
         # serializer to handle turning our `User` object into something that
         # can be JSONified and sent to the client.
-        serializer = self.serializer_class(request.user, context={'request': request})
+        serializer = self.serializer_class(
+            request.user, context={'request': request})
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -345,7 +348,8 @@ class SetPasswordAPIView(APIView):
 
             # Try to decode the token provided
             try:
-                user_data = jwt.decode(password_reset_token, settings.SECRET_KEY, algorithms=['HS256'])
+                user_data = jwt.decode(
+                    password_reset_token, settings.SECRET_KEY, algorithms=['HS256'])
             except Exception as e:
                 return Response(
                     {"errors": PASSWORD_RESET_MSGS['EXPIRED_LINK']},
@@ -355,7 +359,8 @@ class SetPasswordAPIView(APIView):
             # Try to fetch the password reset record related to the token,
             # from the PasswordReset table in the database (if the record exists)
             try:
-                link_password_reset_record = PasswordReset.objects.get(token=password_reset_token)
+                link_password_reset_record = PasswordReset.objects.get(
+                    token=password_reset_token)
                 # Check if the password reset record of the token has been used before and throw and error if so
                 if link_password_reset_record.used is True:
                     return Response(
@@ -377,7 +382,8 @@ class SetPasswordAPIView(APIView):
                 user_found.save()
                 # Update and save the Password Reset record
                 # so the token associated with it can't be used again.
-                password_reset_record = PasswordReset.objects.get(token=password_reset_token)
+                password_reset_record = PasswordReset.objects.get(
+                    token=password_reset_token)
                 password_reset_record.used = True
                 password_reset_record.save()
                 # Let the user know the password reset was successful
@@ -405,7 +411,8 @@ class NotificationsView(APIView):
     def get(self, request):
         notifications = request.user.notifications
 
-        notifications = NotificationSerializer(instance=notifications, many=True)
+        notifications = NotificationSerializer(
+            instance=notifications, many=True, context={'request': request})
 
         return Response(notifications.data)
 
@@ -417,7 +424,11 @@ class NotificationsView(APIView):
 
         notifications = request.user.notifications
 
-        notifications = NotificationSerializer(instance=notifications, many=True)
+        notifications = NotificationSerializer(
+            instance=notifications,
+            many=True,
+            context={'request': request}
+        )
 
         return Response(notifications.data)
 
@@ -432,7 +443,12 @@ class NotificationSettingsView(APIView):
     def get(self, request):
         notification_settings = request.user.notification_settings
 
-        notification_settings = UserNotificationSerializer(instance=notification_settings).data
+        notification_settings = UserNotificationSerializer(
+            instance=notification_settings,
+            context={'request': request}
+        )
+
+        notification_settings = notification_settings.data
 
         return Response(notification_settings)
 
@@ -441,10 +457,13 @@ class NotificationSettingsView(APIView):
                              200: UserNotificationSerializer()})
     def patch(self, request):
         notification_settings = request.user.notification_settings
-        serializer = UserNotificationSerializer(notification_settings, data=request.data)
+        serializer = UserNotificationSerializer(
+            notification_settings, data=request.data)
         serializer.is_valid(raise_exception=True)
         notification_settings = serializer.save(user=request.user)
-        notification_settings = UserNotificationSerializer(instance=notification_settings)
+        notification_settings = UserNotificationSerializer(
+            instance=notification_settings,
+            context={'request': request})
 
         return Response(notification_settings.data)
 
@@ -488,7 +507,8 @@ class FacebookAuthAPIView(APIView):
         :param request:
         :return: token
         """
-        serializer = self.serializer_class(data=request.data.get('facebook', {}))
+        serializer = self.serializer_class(
+            data=request.data.get('facebook', {}))
         serializer.is_valid(raise_exception=True)
         return Response({
             'token': serializer.data.get('access_token')
@@ -511,7 +531,8 @@ class TwitterAuthAPIView(APIView):
         :param request:
         :return: token
         """
-        serializer = self.serializer_class(data=request.data.get('twitter', {}))
+        serializer = self.serializer_class(
+            data=request.data.get('twitter', {}))
         serializer.is_valid(raise_exception=True)
         token = serializer.validated_data['token']
         return Response({"token": token}, status=status.HTTP_200_OK)

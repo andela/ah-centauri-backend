@@ -3,27 +3,27 @@ from django.template.loader import render_to_string
 """
 Notification Message object dict
 
-source: 
+source:
     A ForeignKey to Django's User model (Can be null if it's not a User to User Notification).
 source_display_name:
     A User Friendly name for the source of the notification.
 recipient:
     The Recipient of the notification. It's a ForeignKey to Django's User model.
-category: 
+category:
     Arbitrary category that can be used to group messages.
-action: 
+action:
     Verbal action for the notification E.g Sent, Cancelled, Bought (this can be anything you want)
-obj: 
+obj:
     The id of the object associated with the notification (Can be null).
-short_description: 
+short_description:
     The body of the notification.
-url: 
+url:
     The url of the object associated with the notification (Can be null).
 silent:
     If this Value is set, the notification won't be persisted to the database.
-extra_data: 
+extra_data:
     Arbitrary data as a dictionary.
-channels: 
+channels:
     Delivery channels that should be used to deliver the message. Defaults to an empty
     list and must be provided. Available channels are console, email and websocket
 """
@@ -41,9 +41,7 @@ def notification_channels(user):
         channels.append('email')
 
     if user.in_app_notifications:
-        # uncomment to have real time in app notifications
-        # channels.append('websocket')
-        pass
+        channels.append('pusher')
 
     return channels
 

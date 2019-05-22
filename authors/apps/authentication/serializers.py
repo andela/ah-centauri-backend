@@ -269,7 +269,6 @@ class NotificationSerializer(serializers.ModelSerializer):
     category = serializers.CharField(max_length=50)
     url = serializers.URLField()
     short_description = serializers.CharField(max_length=100)
-    extra_data = serializers.JSONField(default={})
     is_read = serializers.BooleanField(default=False)
     create_date = serializers.DateTimeField(format="%c")
     update_date = serializers.DateTimeField(format="%c")
@@ -277,7 +276,7 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
 
-        fields = ['source', 'source_display_name', 'action', 'category', 'url', 'short_description', 'extra_data',
+        fields = ['source', 'source_display_name', 'action', 'category', 'url', 'short_description',
                   'is_read', 'create_date', 'update_date']
 
 

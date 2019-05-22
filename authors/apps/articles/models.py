@@ -98,8 +98,8 @@ class Articles(TimeStampModel):
 
     def get_average_rating(self):
         if Ratings.objects.all().count() > 0:
-            rating = Ratings.objects.all().aggregate(Avg('value'))
-            return round(rating['value__avg'], 1)
+            rating = Ratings.objects.filter(article=self.id).all().aggregate(Avg('value'))
+            return round(rating['value__avg'], 1) if rating['value__avg'] else 0
         return 0
 
     def get_author(self):

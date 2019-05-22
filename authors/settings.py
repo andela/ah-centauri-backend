@@ -176,14 +176,20 @@ SOCIAL_AUTH_TWITTER_SCOPE = ['email']
 # notifications
 
 NOTIFICATIONS_PAGINATE_BY = 15
-NOTIFICATIONS_USE_WEBSOCKET = False
+NOTIFICATIONS_USE_WEBSOCKET = False # Don't use default websocket client provided by django-notifs
 NOTIFICATIONS_RABBIT_MQ_URL = 'amqp://guest:guest@localhost:5672'
 NOTIFICATIONS_CHANNELS = {
     'console': 'notifications.channels.ConsoleChannel',
-    'email': 'authors.apps.core.channels.EmailNotificationChannel'
+    'email': 'authors.apps.core.channels.EmailNotificationChannel',
+    'pusher': 'authors.apps.core.channels.PusherNotificationChannel',
 }
 
-CELERY_TASK_ALWAYS_EAGER = True
+PUSHER_APP_ID = os.environ.get('PUSHER_APP_ID')
+PUSHER_KEY = os.environ.get('PUSHER_KEY')
+PUSHER_SECRET = os.environ.get('PUSHER_SECRET')
+PUSHER_CLUSTER = os.environ.get('PUSHER_CLUSTER')
+
+CELERY_TASK_ALWAYS_EAGER = os.environ.get('CELERY_ALWAYS_EAGER')
 
 TAGGIT_CASE_INSENSITIVE = True
 
@@ -254,7 +260,7 @@ SWAGGER_SETTINGS = {
             'type': 'apiKey',
             'name': 'Authorization',
             'description': 'Token based authentication. ie Bearer token',
-            'in': 'header' 
+            'in': 'header'
         }
     }
 }
