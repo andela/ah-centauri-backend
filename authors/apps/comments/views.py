@@ -101,7 +101,7 @@ class RetrieveUpdateDeleteCommentAPIView(APIView):
             return Response({"errors": COMMENTS_MSG['ARTICLE_DOES_NOT_EXIST']}, status=status.HTTP_404_NOT_FOUND)
         try:
             comment = Comment.objects.get(pk=self.kwargs['id'])
-            serializer = self.serializer_class(comment)
+            serializer = self.serializer_class(comment, context={'request': request})
             return Response(serializer.data,
                             status=status.HTTP_200_OK)
         except Comment.DoesNotExist:
