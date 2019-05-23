@@ -1,6 +1,10 @@
 from rest_framework import serializers
+from django.contrib.auth.models import AnonymousUser
+from django.contrib.contenttypes.models import ContentType
 
+from authors.apps.articles.models import LikeDislike
 from authors.apps.comments.models import Comment
+
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -13,15 +17,59 @@ class CommentSerializer(serializers.ModelSerializer):
     body = serializers.CharField(max_length=250, required=True)
     likes = serializers.ReadOnlyField(source='likes.likes')
     dislikes = serializers.ReadOnlyField(source='likes.dislikes')
+    has_liked = serializers.SerializerMethodField()
+    has_disliked = serializers.SerializerMethodField()
     has_edits = serializers.SerializerMethodField()
+
+    def get_has_liked(self, instance):
+        """
+        Handle checking if a user has liked an article before
+        :param instance:
+        :return:
+        """
+
+        request = self.context.get('request')
+
+        ld = []
+
+        if request and not isinstance(request.user, AnonymousUser):
+            ct = ContentType.objects.get_for_model(Comment)
+            ld = LikeDislike.objects.filter(content_type=ct,
+                                            user=request.user,
+                                            object_id=instance.id,
+                                            vote=1)
+
+        return bool(len(list(ld)))
+
+    def get_has_disliked(self, instance):
+        """
+        Handle checking if a user has disliked an article before
+        :param instance:
+        :return:
+        """
+
+        request = self.context.get('request')
+
+        ld = []
+
+        if request and not isinstance(request.user, AnonymousUser):
+            ct = ContentType.objects.get_for_model(Comment)
+            ld = LikeDislike.objects.filter(content_type=ct,
+                                        user=request.user,
+                                        object_id=instance.id,
+                                        vote=-1)
+
+        return bool(len(list(ld)))
+
 
     class Meta:
         model = Comment
         fields = ('id', 'article', 'author',
-                  'body', 'created_at', 'updated_at',
+                  'body', 'has_liked', 'has_disliked', 'created_at', 'updated_at',
                   'replies', 'parent', 'likes', 'dislikes', 'has_edits')
         read_only_fields = ('id',)
 
+    
     @staticmethod
     def get_replies(obj):
         """
