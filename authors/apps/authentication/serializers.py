@@ -279,6 +279,18 @@ class NotificationSerializer(serializers.ModelSerializer):
         fields = ['source', 'source_display_name', 'action', 'category', 'url', 'short_description',
                   'is_read', 'create_date', 'update_date']
 
+    def to_representation(self, instance):
+        """"""
+        notification = super().to_representation(instance)
+
+        notification.update({
+            'source': {
+                'username': notification['source']['username']
+            }
+        })
+
+        return notification
+
 
 class UserNotificationSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
@@ -309,7 +321,8 @@ class GoogleAuthAPISerializer(serializers.ModelSerializer):
         :param access_token:
         :return: user_token
         """
-        id_info = SocialValidation.google_auth_validation(access_token=access_token)
+        id_info = SocialValidation.google_auth_validation(
+            access_token=access_token)
 
         # checks if the data retrieved once token is decoded is empty.
         if id_info is None:
@@ -318,7 +331,8 @@ class GoogleAuthAPISerializer(serializers.ModelSerializer):
         # Checks to see if there is a user id associated with the payload after decoding the token
         # this user_id confirms that the user exists on twitter because its a unique identifier.
         if 'sub' not in id_info:
-            raise serializers.ValidationError('Token is not valid or has expired. Please get a new one.')
+            raise serializers.ValidationError(
+                'Token is not valid or has expired. Please get a new one.')
 
         user_id = id_info['sub']
         # Query database to check if there is an existing user with the save email.
@@ -360,7 +374,8 @@ class FacebookAuthAPISerializer(serializers.ModelSerializer):
         :param access_token:
         :return: user_token
         """
-        id_info = SocialValidation.facebook_auth_validation(access_token=access_token)
+        id_info = SocialValidation.facebook_auth_validation(
+            access_token=access_token)
 
         # checks if the data retrieved once token is decoded is empty.
         if id_info is None:
@@ -369,7 +384,8 @@ class FacebookAuthAPISerializer(serializers.ModelSerializer):
         # Checks to see if there is a user id associated with the payload after decoding the token
         # this user_id confirms that the user exists on twitter because its a unique identifier.
         if 'id' not in id_info:
-            raise serializers.ValidationError('Token is not valid or has expired. Please get a new one.')
+            raise serializers.ValidationError(
+                'Token is not valid or has expired. Please get a new one.')
 
         user_id = id_info['id']
 
@@ -416,7 +432,8 @@ class TwitterAuthAPISerializer(serializers.ModelSerializer):
                                                            access_token_secret=data.get('access_token_secret'))
         # Check if there is an error message in the id_info validation body
         if 'errors' in id_info:
-            raise serializers.ValidationError(id_info.get('errors')[0]['message'])
+            raise serializers.ValidationError(
+                id_info.get('errors')[0]['message'])
 
         # checks if the data retrieved once token is decoded is empty.
         if id_info is None:
@@ -425,7 +442,8 @@ class TwitterAuthAPISerializer(serializers.ModelSerializer):
         # Checks to see if there is a user id associated with the payload after decoding the token
         # this user_id confirms that the user exists on twitter because its a unique identifier.
         if 'id_str' not in id_info:
-            raise serializers.ValidationError('Token is not valid or has expired. Please get a new one.')
+            raise serializers.ValidationError(
+                'Token is not valid or has expired. Please get a new one.')
 
         user_id = id_info['id_str']
 

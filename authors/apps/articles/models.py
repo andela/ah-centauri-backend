@@ -31,7 +31,7 @@ class LikeDislikeManager(models.Manager):
         the dislikes add a negative value
         """
         return self.get_queryset().filter(vote__lt=0).count()
-    
+
     def has_liked(self):
         request = self.context.get('request')
         if request:
@@ -73,7 +73,7 @@ class Articles(TimeStampModel):
     title = models.CharField(max_length=100, default='')
     slug = models.SlugField(max_length=140, unique=True, blank=True)
     body = models.TextField()
-    description = models.CharField(max_length=140, default='')
+    description = models.CharField(max_length=250, default='')
     tags = TaggableManager()
 
     def __str__(self):

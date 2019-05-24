@@ -231,6 +231,11 @@ class CreateListRatingsAPIView(APIView):
             }
         )
 
+        send_notifications(request,
+                           notification_type="article_rated",
+                           instance=rating,
+                           recipients=[rating.article.author])
+
         serializer = self.serializer_class(instance=rating)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)

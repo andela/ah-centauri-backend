@@ -30,7 +30,7 @@ class ArticleSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer
         required=True,
         max_length=100)
     body = serializers.CharField()
-    description = serializers.CharField(required=True, max_length=140)
+    description = serializers.CharField(required=True, max_length=250)
     author = serializers.ReadOnlyField(source='get_author')
     average_rating = serializers.ReadOnlyField(source='get_average_rating')
     likes = serializers.ReadOnlyField(source='likes.likes')
